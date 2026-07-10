@@ -708,17 +708,24 @@ async function loadRex(){
 }
 async function loadXAU(){
   try{
-    // Use metals-api fallback or static XAU from known price
-    // CoinGecko gold ID may not be reliable, use approximate from BTC correlation
+    // Use PAXG (PAX Gold) — token pegged 1:1 to real gold ounce, reliable XAU proxy
     let xp = 4094; // fallback
+    let xchg = 0;
     try{
-      const rx=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=gold&vs_currencies=usd&include_24hr_change=true');
-      if(rx.ok){const dx=await rx.json(); if(dx.gold&&dx.gold.usd) xp=dx.gold.usd;}
+      const rx=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd&include_24hr_change=true');
+      if(rx.ok){
+        const dx=await rx.json();
+        // sanity check: real gold price must be > $1000/oz
+        if(dx['pax-gold'] && dx['pax-gold'].usd > 1000){
+          xp=dx['pax-gold'].usd;
+          xchg=dx['pax-gold'].usd_24h_change||0;
+        }
+      }
     }catch(ex){}
-    const d={gold:{usd:xp}};
     document.getElementById('rex-xau').textContent='$'+Math.round(xp).toLocaleString();
-    document.getElementById('rex-xau-chg').textContent='+0.12% (24h)';
-    document.getElementById('rex-xau-chg').className='price-chg up';
+    const xce=document.getElementById('rex-xau-chg');
+    xce.textContent=(xchg>=0?'+':'')+xchg.toFixed(2)+'% (24h)';
+    xce.className='price-chg '+(xchg>=0?'up':'dn');
     document.getElementById('tb-xau').textContent='$'+Math.round(xp).toLocaleString();
     const xr=Math.round(xp);
     document.getElementById('s-sup').textContent='$'+(xr-80).toLocaleString()+' – $'+(xr-50).toLocaleString();
@@ -873,7 +880,8 @@ const SCAN_PROMPT = `คุณคือ Rex นักวิเคราะห์
 - ห้ามแนะนำ micro-cap ที่พุ่งเกิน 50% ในสัปดาห์ที่ผ่านมาแล้ว (กันรับดอย)
 - เหรียญต้องมีเหตุผลชัดเจน เช่น มีข่าว, volume เพิ่ม, momentum ดี, breakout
 - ตอบเป็น JSON เท่านั้น ห้ามมี markdown หรือข้อความอื่นนอก JSON
-รูปแบบ: {"summary":"ภาพรวมตลาดวันนี้ ภาษาไทย 1-2 ประโยค","coins":[{"symbol":"ชื่อเหรียญ","price":"ราคาปัจจุบันโดยประมาณ","reason":"เหตุผลที่น่าสนใจ ภาษาไทย","levels":"แนวรับ / แนวต้านสำคัญ","risk":"ความเสี่ยงหลักที่ต้องระวัง ภาษาไทย"}]}`;
+รูปแบบ: {"summary":"ภาพรวมตลาดวันนี้ ภาษาไทย 1-2 ประโยค","coins":[{"symbol":"ชื่อเหรียญ","price":"ราคาปัจจุบันโดยประมาณ","reason":"เหตุผลที่น่าสนใจ ภาษาไทย","levels":"แนวรับ / แนวต้านสำคัญ","risk":"ความเสี่ยงหลักที่ต้องระวัง ภาษาไทย"}]}
+สำคัญมาก: เขียนแต่ละ field ให้สั้นกระชับ ไม่เกิน 1-2 ประโยค เพื่อให้ JSON จบสมบูรณ์`;
 
 async function scanCoins() {
   if (!apiKey) {
@@ -903,7 +911,7 @@ async function scanCoins() {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 2500,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: SCAN_PROMPT }]
       })
@@ -922,14 +930,28 @@ async function scanCoins() {
 
     // Parse JSON — strip any accidental markdown fences
     const clean = rawText.replace(/```json|```/g, '').trim();
-    let parsed;
+    let parsed = null;
     try {
       parsed = JSON.parse(clean);
-    } catch (e) {
+    } catch (e1) {
       // Try extracting JSON object from response
       const match = clean.match(/\{[\s\S]*\}/);
-      if (match) parsed = JSON.parse(match[0]);
-      else throw new Error('parse JSON ไม่ได้ — กดสแกนใหม่อีกครั้ง');
+      if (match) {
+        try { parsed = JSON.parse(match[0]); } catch (e2) { parsed = null; }
+      }
+      // Last resort: repair truncated JSON (close open strings/brackets)
+      if (!parsed) {
+        let repair = (match ? match[0] : clean);
+        // Count and close unclosed structures
+        const quotes = (repair.match(/(?<!\\)"/g) || []).length;
+        if (quotes % 2 === 1) repair += '"';
+        const opens = (repair.match(/\{/g) || []).length - (repair.match(/\}/g) || []).length;
+        const arrs = (repair.match(/\[/g) || []).length - (repair.match(/\]/g) || []).length;
+        repair += ']'.repeat(Math.max(0, arrs)) + '}'.repeat(Math.max(0, opens));
+        try { parsed = JSON.parse(repair); } catch (e3) {
+          throw new Error('parse JSON ไม่ได้ — กดสแกนใหม่อีกครั้ง');
+        }
+      }
     }
 
     // Validate structure
