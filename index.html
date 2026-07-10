@@ -3,1044 +3,693 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IntelShift — Oil's AI Company</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>IntelShift — Today</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
-  --g:#1D9E75;--gl:#E1F5EE;--gm:#9FE1CB;--gd:#0F6E56;
-  --red:#E24B4A;--rl:#FCEBEB;--amb:#EF9F27;--al:#FAEEDA;
-  --pl:#EEEDFE;--bl:#E6F1FB;--pu:#534AB7;
-  --bg:#0f1117;--bg2:#161b27;--bg3:#1e2535;--bg4:#252d3d;--bg5:#2d3650;
+  --g:#1D9E75;--gl:rgba(29,158,117,.12);--gm:rgba(29,158,117,.35);--gd:#25c28f;
+  --red:#E24B4A;--rl:rgba(226,75,74,.1);--amb:#EF9F27;--abg:rgba(239,159,39,.12);
+  --pu:#7F77DD;--pubg:rgba(127,119,221,.12);
+  --bg:#0f1117;--bg2:#161b27;--bg3:#1e2535;--bg4:#252d3d;
   --br:#2a3348;--br2:#3a4a6a;
-  --tx:#e2e8f0;--tx2:#8892a4;--tx3:#4a5568;
-  --r:8px;--rs:5px;
+  --tx:#e8ecf4;--tx2:#93a0b4;--tx3:#566179;
+  --r:12px;--rs:8px;
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-size:13px;overflow:hidden;}
-.app{display:flex;flex-direction:column;height:100vh;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-size:15px;min-height:100vh;}
+.app{max-width:640px;margin:0 auto;padding-bottom:80px;}
 
-/* TOPBAR */
-.topbar{height:48px;background:var(--bg2);border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between;padding:0 1rem;flex-shrink:0;gap:8px;}
-.logo{font-size:15px;font-weight:700;letter-spacing:-.3px;white-space:nowrap;}
+/* HEADER */
+.header{padding:1.25rem 1rem .75rem;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:17px;font-weight:700;}
 .logo span{color:var(--g);}
-.nav{display:flex;gap:2px;overflow-x:auto;}
-.nt{padding:5px 11px;border-radius:var(--rs);border:none;background:transparent;color:var(--tx2);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;}
-.nt:hover{background:var(--bg3);}
-.nt.active{background:var(--bg3);color:var(--g);border:1px solid var(--br);}
-.topbar-r{display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.tb-price{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--tx2);}
-.tb-price span{color:var(--tx);}
-.clock{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--tx3);background:var(--bg3);padding:3px 8px;border-radius:var(--rs);border:1px solid var(--br);}
+.date{font-size:12px;color:var(--tx3);}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--br);display:flex;justify-content:space-around;padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:100;}
+.bn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--tx3);font-size:10px;cursor:pointer;font-family:inherit;padding:4px 16px;}
+.bn.active{color:var(--g);}
+.bn-icon{font-size:20px;}
 
 /* PAGES */
-.main{flex:1;overflow:hidden;display:flex;}
-.page{display:none;flex:1;overflow-y:auto;padding:1rem;}
+.page{display:none;padding:0 1rem;}
 .page.active{display:block;}
 
 /* CARDS */
-.card{background:var(--bg2);border:1px solid var(--br);border-radius:var(--r);padding:.875rem 1rem;}
-.card-title{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--tx3);margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;}
-.cdot{width:6px;height:6px;border-radius:50%;margin-right:5px;display:inline-block;}
-.grid{display:grid;gap:10px;}
-.g2{grid-template-columns:1fr 1fr;}
-.g3{grid-template-columns:repeat(3,1fr);}
-.g4{grid-template-columns:repeat(4,1fr);}
-.pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;}
-.pill-g{background:rgba(29,158,117,.15);color:var(--g);border:1px solid rgba(29,158,117,.3);}
-.pill-r{background:rgba(226,75,74,.15);color:var(--red);border:1px solid rgba(226,75,74,.3);}
-.pill-a{background:rgba(239,159,39,.15);color:var(--amb);border:1px solid rgba(239,159,39,.3);}
-.pill-b{background:rgba(83,74,183,.15);color:#7F77DD;border:1px solid rgba(83,74,183,.3);}
-.up{color:var(--g);} .dn{color:var(--red);} .warn{color:var(--amb);}
+.card{background:var(--bg2);border:1px solid var(--br);border-radius:var(--r);padding:1.125rem;margin-bottom:12px;}
+.card-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--tx3);margin-bottom:.875rem;display:flex;align-items:center;justify-content:space-between;}
+.up{color:var(--gd);} .dn{color:var(--red);} .warn{color:var(--amb);}
 .mono{font-family:'JetBrains Mono',monospace;}
-.row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--br);font-size:12px;}
-.row:last-child{border-bottom:none;}
-.rl{color:var(--tx2);} .rv{font-family:'JetBrains Mono',monospace;font-size:11px;}
-.run{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--g);}
-.rundot{width:5px;height:5px;border-radius:50%;background:var(--g);animation:pulse 1.5s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
-.btn-g{background:var(--g);color:#fff;border:none;padding:7px 14px;border-radius:var(--rs);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;transition:background .15s;}
-.btn-g:hover{background:var(--gd);}
-.btn-o{background:transparent;color:var(--g);border:1px solid rgba(29,158,117,.4);padding:6px 12px;border-radius:var(--rs);font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s;}
-.btn-o:hover{background:rgba(29,158,117,.1);}
-.sec{margin-bottom:1rem;}
-.sec-label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--tx3);margin-bottom:8px;}
 
-/* ===== ARIA / DASHBOARD ===== */
-.brief-box{background:linear-gradient(135deg,var(--bg3),var(--bg4));border:1px solid var(--br2);border-radius:var(--r);padding:1.125rem 1.25rem;margin-bottom:10px;}
-.brief-greeting{font-size:18px;font-weight:600;margin-bottom:4px;}
-.brief-sub{font-size:12px;color:var(--tx2);margin-bottom:12px;line-height:1.6;}
-.brief-tags{display:flex;flex-wrap:wrap;gap:6px;}
-.brief-tag{font-size:11px;padding:4px 12px;border-radius:20px;background:var(--bg5);border:1px solid var(--br2);color:var(--tx2);cursor:pointer;transition:all .15s;}
-.brief-tag:hover{border-color:var(--g);color:var(--g);}
-.task-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--br);}
+/* MARKET LINE */
+.mkt-row{display:flex;gap:10px;}
+.mkt-item{flex:1;background:var(--bg3);border-radius:var(--rs);padding:12px;text-align:center;}
+.mkt-sym{font-size:11px;color:var(--tx3);margin-bottom:4px;font-weight:600;}
+.mkt-price{font-size:17px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.mkt-chg{font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:3px;}
+
+/* POSITION */
+.pos-status{display:flex;align-items:center;gap:12px;background:var(--bg3);border-radius:var(--rs);padding:14px;}
+.pos-light{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+.pos-light.ok{background:var(--g);box-shadow:0 0 12px rgba(29,158,117,.5);}
+.pos-light.warn{background:var(--amb);box-shadow:0 0 12px rgba(239,159,39,.5);animation:pulse 1.5s infinite;}
+.pos-light.danger{background:var(--red);box-shadow:0 0 12px rgba(226,75,74,.6);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.pos-text{flex:1;}
+.pos-main{font-size:14px;font-weight:600;}
+.pos-sub{font-size:12px;color:var(--tx2);margin-top:2px;line-height:1.5;}
+.pos-edit{font-size:11px;color:var(--pu);background:none;border:none;cursor:pointer;font-family:inherit;padding:4px;}
+
+/* TASKS */
+.task-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--br);}
 .task-item:last-child{border-bottom:none;}
-.task-cb{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--br2);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.task-cb{width:24px;height:24px;border-radius:7px;border:2px solid var(--br2);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;transition:all .15s;}
 .task-cb.done{background:var(--g);border-color:var(--g);}
-.task-text{flex:1;font-size:12px;color:var(--tx);}
+.task-text{flex:1;font-size:14px;}
 .task-text.done{text-decoration:line-through;color:var(--tx3);}
-.task-time{font-size:10px;color:var(--tx3);white-space:nowrap;}
-.task-del{font-size:14px;color:var(--tx3);cursor:pointer;opacity:0;transition:opacity .15s;}
-.task-item:hover .task-del{opacity:1;}
-.task-input-row{display:flex;gap:8px;margin-top:10px;}
-.task-input{flex:1;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:8px 12px;font-size:12px;color:var(--tx);font-family:inherit;outline:none;}
+.task-del{font-size:20px;color:var(--tx3);cursor:pointer;padding:0 6px;background:none;border:none;}
+.task-add-row{display:flex;gap:8px;margin-top:12px;}
+.task-input{flex:1;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:12px 14px;font-size:14px;color:var(--tx);font-family:inherit;outline:none;}
 .task-input:focus{border-color:var(--g);}
-.task-time-input{width:110px;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:8px 10px;font-size:12px;color:var(--tx);font-family:inherit;outline:none;}
-.reminder-badge{font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(239,159,39,.15);color:var(--amb);border:1px solid rgba(239,159,39,.3);margin-left:6px;}
-.income-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--br);font-size:12px;}
-.income-row:last-child{border-bottom:none;}
-.income-name{color:var(--tx2);}
-.income-val{font-family:'JetBrains Mono',monospace;font-weight:500;}
+.btn{background:var(--g);color:#fff;border:none;padding:12px 18px;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn:active{transform:scale(.97);}
+.btn-purple{background:var(--pu);}
+.btn-full{width:100%;margin-top:4px;}
+.btn:disabled{opacity:.5;}
 
-/* ===== REX ===== */
-.price-big{font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:-.5px;}
-.price-chg{font-size:13px;font-family:'JetBrains Mono',monospace;margin-top:4px;}
-.signal-bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
-.sig{padding:5px 12px;border-radius:var(--rs);font-size:11px;font-weight:500;text-align:center;}
-.sig-bull{background:rgba(29,158,117,.2);color:var(--g);border:1px solid rgba(29,158,117,.4);}
-.sig-bear{background:rgba(226,75,74,.2);color:var(--red);border:1px solid rgba(226,75,74,.4);}
-.sig-neu{background:rgba(239,159,39,.2);color:var(--amb);border:1px solid rgba(239,159,39,.4);}
-.chart-wrap{position:relative;height:180px;}
-.entry-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--br);}
-.entry-row:last-child{border-bottom:none;}
-.edot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.einfo{flex:1;}
-.ezone{font-size:12px;font-weight:500;}
-.enote{font-size:10px;color:var(--tx3);margin-top:1px;}
-.eprice{text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;}
-.esl{font-size:10px;color:var(--tx3);margin-top:1px;text-align:right;}
-
-/* ===== NOVA ===== */
-.nova-daily{background:var(--bg3);border:1px solid var(--br2);border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:10px;}
-.nova-day-title{font-size:13px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
-.trend-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--br);}
-.trend-item:last-child{border-bottom:none;}
-.trend-num{font-size:11px;font-weight:600;color:var(--g);width:18px;flex-shrink:0;margin-top:1px;}
-.trend-body{flex:1;}
-.trend-title{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:2px;}
-.trend-desc{font-size:11px;color:var(--tx2);line-height:1.5;}
-.trend-use{font-size:10px;color:var(--g);margin-top:3px;}
-.hashtag-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
-.hashtag{font-size:11px;padding:3px 9px;border-radius:20px;background:rgba(83,74,183,.15);color:#AFA9EC;border:1px solid rgba(83,74,183,.3);}
-.script-preview{background:var(--bg3);border-radius:var(--rs);padding:10px 12px;margin-top:8px;}
-.script-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--tx3);margin-bottom:4px;}
-.script-content{font-size:12px;color:var(--tx);line-height:1.7;}
-.time-rec{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
-.time-pill{font-size:10px;padding:3px 10px;border-radius:20px;background:rgba(239,159,39,.15);color:var(--amb);border:1px solid rgba(239,159,39,.3);}
-
-/* ===== OIL TECH ===== */
-.ref-item{background:var(--bg3);border-radius:var(--rs);padding:8px 12px;margin-bottom:6px;cursor:pointer;transition:border .15s;border:1px solid transparent;}
-.ref-item:hover{border-color:var(--br2);}
-.ref-title{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;}
-.ref-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:#9FE1CB;background:var(--bg4);border-radius:4px;padding:6px 10px;margin-top:6px;white-space:pre;overflow-x:auto;display:none;line-height:1.6;}
-.ref-item.open .ref-code{display:block;}
-.copy-badge{font-size:10px;color:var(--tx3);cursor:pointer;padding:2px 7px;border-radius:3px;background:var(--bg4);}
-.copy-badge:hover{color:var(--g);}
-
-/* ===== CHAT (full) ===== */
-.chat-page{display:flex;flex-direction:column;height:100%;overflow:hidden;}
-.agent-bar{display:flex;gap:5px;padding:.75rem 1rem;background:var(--bg2);border-bottom:1px solid var(--br);overflow-x:auto;flex-shrink:0;}
-.ab{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:20px;border:1px solid var(--br);background:transparent;color:var(--tx2);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;}
-.ab:hover{border-color:var(--br2);}
-.ab.active{background:var(--bg3);border-color:var(--g);color:var(--g);}
-.ab-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;}
-.chat-msgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:10px;}
-.cmsg{display:flex;gap:10px;align-items:flex-start;max-width:700px;}
-.cmsg.me{flex-direction:row-reverse;align-self:flex-end;}
-.cmsg-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px;}
-.cmsg-av.me{background:var(--bg3);border:1px solid var(--br);font-size:11px;font-weight:600;color:var(--tx2);}
-.bubble{padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.7;}
-.bubble.ai{background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:3px 12px 12px 12px;}
-.bubble.me{background:var(--g);color:#fff;border-radius:12px 3px 12px 12px;}
-.bubble pre{background:var(--bg3);padding:8px;border-radius:4px;overflow-x:auto;font-size:11px;margin:6px 0;font-family:monospace;line-height:1.6;}
-.bubble code{background:var(--bg3);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;}
-.bubble strong{font-weight:600;}
-.tdots{display:flex;gap:4px;padding:10px 13px;}
-.tdots span{width:5px;height:5px;border-radius:50%;background:var(--tx3);animation:blink 1.2s infinite;}
-.tdots span:nth-child(2){animation-delay:.2s;}
-.tdots span:nth-child(3){animation-delay:.4s;}
+/* SCAN */
+.scan-summary{font-size:13px;color:var(--tx2);background:var(--bg3);border-left:3px solid var(--pu);border-radius:var(--rs);padding:12px;margin-bottom:10px;line-height:1.65;display:none;}
+.scan-loading{display:none;text-align:center;padding:1.5rem 0;color:var(--tx3);font-size:13px;}
+.dots span{width:8px;height:8px;border-radius:50%;background:var(--pu);display:inline-block;margin:0 2px;animation:blink 1.2s infinite;}
+.dots span:nth-child(2){animation-delay:.2s;}
+.dots span:nth-child(3){animation-delay:.4s;}
 @keyframes blink{0%,80%,100%{opacity:.2;}40%{opacity:1;}}
-.welcome-chat{text-align:center;padding:2rem 1rem;}
-.wc-em{font-size:36px;margin-bottom:.75rem;}
-.wc-n{font-size:15px;font-weight:600;margin-bottom:.25rem;}
-.wc-d{font-size:12px;color:var(--tx2);line-height:1.65;margin-bottom:1.25rem;}
-.sugg-wrap{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;}
-.sugg{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--br);background:transparent;color:var(--tx2);cursor:pointer;font-family:inherit;transition:all .15s;}
-.sugg:hover{border-color:var(--g);color:var(--g);}
-.input-area{padding:.875rem 1rem;background:var(--bg2);border-top:1px solid var(--br);flex-shrink:0;}
-.input-row{display:flex;gap:8px;align-items:flex-end;max-width:700px;margin:0 auto;}
-.chat-ta{flex:1;background:var(--bg3);border:1px solid var(--br);border-radius:var(--r);padding:9px 13px;font-size:13px;color:var(--tx);font-family:inherit;outline:none;resize:none;min-height:40px;max-height:120px;line-height:1.6;}
-.chat-ta:focus{border-color:var(--g);}
-.send-btn{width:38px;height:38px;border-radius:50%;border:none;background:var(--g);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
-.send-btn:hover{background:var(--gd);}
-.send-btn:disabled{opacity:.4;cursor:not-allowed;}
-.hint{font-size:10px;color:var(--tx3);text-align:center;margin-top:4px;}
+.scan-error{display:none;font-size:13px;color:var(--red);background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:12px;text-align:center;}
+.scan-error button{color:var(--red);background:none;border:none;text-decoration:underline;cursor:pointer;font-size:13px;font-family:inherit;}
+.coin-card{background:var(--bg3);border:1px solid var(--br);border-radius:var(--r);padding:14px;margin-bottom:10px;}
+.coin-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.coin-av{width:38px;height:38px;border-radius:50%;background:var(--pubg);border:1px solid rgba(127,119,221,.35);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#AFA9EC;flex-shrink:0;}
+.coin-sym{font-size:15px;font-weight:700;}
+.coin-price{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--gd);margin-top:1px;}
+.coin-sec{font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:8px;}
+.coin-label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--tx3);display:block;margin-bottom:2px;}
+.coin-levels{font-size:12px;color:#AFA9EC;margin-bottom:8px;}
+.coin-risk{font-size:12px;color:var(--red);background:var(--rl);border:1px solid rgba(226,75,74,.2);border-radius:var(--rs);padding:8px 10px;line-height:1.5;}
+.scan-note{font-size:11px;color:var(--tx3);line-height:1.6;padding-top:10px;border-top:1px solid var(--br);}
+.key-hint{display:none;font-size:13px;color:var(--amb);background:var(--abg);border:1px solid rgba(239,159,39,.3);border-radius:var(--rs);padding:12px;}
 
-@media(max-width:680px){
-  .g4{grid-template-columns:repeat(2,1fr);}
-  .g3{grid-template-columns:1fr;}
-  .g2{grid-template-columns:1fr;}
-}
+/* TRADE PLAN */
+.tp-body{width:100%;min-height:180px;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:14px;font-size:14px;line-height:1.9;color:var(--tx);font-family:'JetBrains Mono',monospace;resize:vertical;outline:none;white-space:pre-wrap;}
+.tp-body:focus{border-color:var(--pu);}
+.tp-saved{font-size:12px;color:var(--g);display:none;}
+
+/* INCOME */
+.inc-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--br);font-size:14px;}
+.inc-row:last-child{border-bottom:none;}
+.inc-name{color:var(--tx2);}
+.inc-val{font-family:'JetBrains Mono',monospace;font-weight:600;}
+.inc-add{display:flex;gap:8px;margin-top:12px;}
+.inc-add input{flex:1;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:11px 13px;font-size:14px;color:var(--tx);font-family:inherit;outline:none;}
+.inc-add select{background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:11px 10px;font-size:13px;color:var(--tx);font-family:inherit;outline:none;}
+
+/* REX PAGE */
+.price-hero{display:flex;gap:10px;margin-bottom:12px;}
+.ph-item{flex:1;background:var(--bg2);border:1px solid var(--br);border-radius:var(--r);padding:1rem;}
+.ph-sym{font-size:11px;color:var(--tx3);font-weight:600;margin-bottom:4px;}
+.ph-price{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:-.5px;}
+.ph-chg{font-size:12px;font-family:'JetBrains Mono',monospace;margin-top:3px;}
+.chart-wrap{position:relative;height:200px;}
+.sig-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--br);font-size:14px;}
+.sig-row:last-child{border-bottom:none;}
+.sig-name{color:var(--tx2);}
+.sig-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}
+
+/* CHAT */
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 190px);}
+.agent-row{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;}
+.ab{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;border:1px solid var(--br);background:var(--bg2);color:var(--tx2);font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.ab.active{border-color:var(--g);color:var(--g);background:var(--gl);}
+.chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 0;}
+.cmsg{display:flex;gap:9px;align-items:flex-start;}
+.cmsg.me{flex-direction:row-reverse;}
+.cav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:var(--bg3);}
+.bubble{padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.65;max-width:78%;}
+.bubble.ai{background:var(--bg2);border:1px solid var(--br);border-radius:4px 14px 14px 14px;}
+.bubble.me{background:var(--g);color:#fff;border-radius:14px 4px 14px 14px;}
+.bubble pre{background:var(--bg3);padding:8px;border-radius:6px;overflow-x:auto;font-size:12px;margin:6px 0;font-family:monospace;}
+.bubble code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;}
+.chat-input-row{display:flex;gap:8px;padding-top:10px;align-items:flex-end;}
+.chat-ta{flex:1;background:var(--bg2);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px;font-size:15px;color:var(--tx);font-family:inherit;outline:none;resize:none;min-height:46px;max-height:120px;line-height:1.5;}
+.chat-ta:focus{border-color:var(--g);}
+.send-btn{width:46px;height:46px;border-radius:50%;border:none;background:var(--g);color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;}
+.send-btn:disabled{opacity:.4;}
+.welcome{text-align:center;padding:2rem 0;color:var(--tx3);font-size:13px;}
+.sugg-wrap{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px;}
+.sugg{font-size:13px;padding:9px 15px;border-radius:20px;border:1px solid var(--br);background:var(--bg2);color:var(--tx2);cursor:pointer;font-family:inherit;}
+
+/* SETUP */
+.key-input-row{display:flex;gap:8px;}
+.key-input{flex:1;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:var(--tx);font-family:monospace;outline:none;}
+.small-note{font-size:12px;color:var(--tx3);line-height:1.7;margin-top:10px;}
+.small-note a{color:var(--g);}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="topbar">
+  <div class="header">
     <div class="logo">Intel<span>Shift</span></div>
-    <div class="nav">
-      <button class="nt active" onclick="nav('aria',this)">📋 Aria</button>
-      <button class="nt" onclick="nav('rex',this)">📊 Rex</button>
-      <button class="nt" onclick="nav('nova',this)">🎬 Nova</button>
-      <button class="nt" onclick="nav('oil',this)">💻 Oil</button>
-      <button class="nt" onclick="nav('chat',this)">💬 Chat</button>
-      <button class="nt" onclick="nav('setup',this)">⚙️</button>
-    </div>
-    <div class="topbar-r">
-      <div class="tb-price">BTC <span id="tb-btc">—</span></div>
-      <div class="tb-price">XAU <span id="tb-xau">—</span></div>
-      <div class="clock" id="clock">--:--</div>
-    </div>
+    <div class="date" id="today-date"></div>
   </div>
-  <div class="main">
 
-    <!-- ===== ARIA ===== -->
-    <div id="page-aria" class="page active">
-      <div class="sec">
-        <div class="brief-box">
-          <div class="brief-greeting" id="greet">สวัสดีครับคุณออยล์ 👋</div>
-          <div class="brief-sub" id="brief-sub">กำลังเตรียมสรุปวันนี้ให้...</div>
-          <div class="brief-tags">
-            <div class="brief-tag" onclick="nav('rex',document.querySelectorAll('.nt')[1])">📊 ดูตลาดวันนี้</div>
-            <div class="brief-tag" onclick="nav('nova',document.querySelectorAll('.nt')[2])">🎬 Nova แนะนำ content</div>
-            <div class="brief-tag" onclick="addTask('เช็ค Bot Trade XAU','')">➕ เพิ่ม task ด่วน</div>
-          </div>
-        </div>
-      </div>
+  <!-- ========== TODAY ========== -->
+  <div id="page-today" class="page active">
 
-      <div class="grid g2 sec">
-        <div class="card">
-          <div class="card-title"><span><span class="cdot" style="background:#EF9F27;"></span>Task วันนี้</span><span class="pill pill-a" id="task-count">0 รายการ</span></div>
-          <div id="task-list"><div style="font-size:12px;color:var(--tx3);padding:.5rem 0;">ยังไม่มี task — เพิ่มด้านล่างได้เลยครับ</div></div>
-          <div class="task-input-row">
-            <input class="task-input" id="task-input" placeholder="เพิ่ม task..." onkeydown="if(event.key==='Enter')addTask()"/>
-            <input class="task-time-input" id="task-time" type="time" title="เวลา reminder"/>
-            <button class="btn-g" onclick="addTask()">+ เพิ่ม</button>
-          </div>
+    <!-- MARKET -->
+    <div class="card">
+      <div class="card-title"><span>ตลาดตอนนี้</span><span style="font-size:10px;color:var(--tx3);" id="mkt-upd">โหลด...</span></div>
+      <div class="mkt-row">
+        <div class="mkt-item">
+          <div class="mkt-sym">BTC</div>
+          <div class="mkt-price" id="m-btc">—</div>
+          <div class="mkt-chg" id="m-btc-c">—</div>
         </div>
-        <div class="card">
-          <div class="card-title"><span><span class="cdot" style="background:var(--g);"></span>รายได้เสริม — ติดตาม</span></div>
-          <div class="income-row"><span class="income-name">🎬 TikTok Affiliate</span><span class="income-val up" id="inc-tiktok">฿0</span></div>
-          <div class="income-row"><span class="income-name">📈 Grid Bot XAU</span><span class="income-val" id="inc-bot">$0.00</span></div>
-          <div class="income-row"><span class="income-name">💰 Dual Asset USDT</span><span class="income-val" id="inc-dual">$0.00</span></div>
-          <div class="income-row" style="border-top:1px solid var(--br2);margin-top:4px;padding-top:8px;"><span class="income-name" style="font-weight:500;">รวมเดือนนี้</span><span class="income-val up" style="font-size:14px;" id="inc-total">฿0</span></div>
-          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
-            <input id="inc-val" placeholder="อัปเดตรายได้..." style="flex:1;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:6px 10px;font-size:11px;color:var(--tx);font-family:inherit;outline:none;" />
-            <select id="inc-type" style="background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:6px 8px;font-size:11px;color:var(--tx);font-family:inherit;outline:none;">
-              <option value="tiktok">TikTok</option>
-              <option value="bot">Grid Bot</option>
-              <option value="dual">Dual Asset</option>
-            </select>
-            <button class="btn-o" onclick="updateIncome()">บันทึก</button>
-          </div>
+        <div class="mkt-item">
+          <div class="mkt-sym">XAU (ทอง)</div>
+          <div class="mkt-price" id="m-xau">—</div>
+          <div class="mkt-chg" id="m-xau-c">—</div>
         </div>
-      </div>
-
-      <div class="card sec">
-        <div class="card-title"><span><span class="cdot" style="background:var(--pu);"></span>Aria แนะนำวันนี้</span><div class="run"><div class="rundot"></div>Live</div></div>
-        <div id="aria-tips">
-          <div style="font-size:12px;color:var(--tx2);line-height:1.8;" id="aria-daily-tips">กำลังโหลดคำแนะนำ...</div>
+        <div class="mkt-item">
+          <div class="mkt-sym">ETH</div>
+          <div class="mkt-price" id="m-eth">—</div>
+          <div class="mkt-chg" id="m-eth-c">—</div>
         </div>
       </div>
     </div>
 
-    <!-- ===== REX ===== -->
-    <div id="page-rex" class="page">
-      <div class="grid g4 sec" style="margin-bottom:10px;">
-        <div class="card">
-          <div class="card-title"><span class="cdot" style="background:var(--amb);"></span>BTC/USD</div>
-          <div class="price-big" id="rex-btc">—</div>
-          <div class="price-chg" id="rex-btc-chg">—</div>
-        </div>
-        <div class="card">
-          <div class="card-title"><span class="cdot" style="background:var(--g);"></span>XAU/USD</div>
-          <div class="price-big" id="rex-xau">—</div>
-          <div class="price-chg" id="rex-xau-chg">—</div>
-        </div>
-        <div class="card">
-          <div class="card-title"><span class="cdot" style="background:#378ADD;"></span>RSI (14)</div>
-          <div class="price-big" id="rex-rsi" style="font-size:22px;">—</div>
-          <div class="price-chg" id="rex-rsi-label">กำลังคำนวณ</div>
-        </div>
-        <div class="card">
-          <div class="card-title"><span class="cdot" style="background:var(--g);"></span>Overall Signal</div>
-          <div style="font-size:20px;font-weight:700;margin-top:4px;" id="rex-signal">—</div>
-          <div class="price-chg" id="rex-signal-sub">รอข้อมูล</div>
-        </div>
-      </div>
-
-      <div class="grid g2 sec">
-        <div class="card">
-          <div class="card-title"><span><span class="cdot" style="background:var(--g);"></span>BTC — 30 วัน</span><span id="rex-upd" style="font-size:10px;color:var(--tx3);">กำลังโหลด</span></div>
-          <div class="chart-wrap"><canvas id="rex-chart"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-title"><span class="cdot" style="background:var(--red);"></span>Entry Point XAU วันนี้</div>
-          <div id="rex-entries">
-            <div class="entry-row"><div class="edot" style="background:var(--g);"></div><div class="einfo"><div class="ezone">Zone A — Conservative</div><div class="enote">รอ bounce + Volume ยืนยัน</div></div><div><div class="eprice" id="e-a">—</div><div class="esl up" id="e-asl">—</div></div></div>
-            <div class="entry-row"><div class="edot" style="background:var(--amb);"></div><div class="einfo"><div class="ezone">Zone B — Strong Support</div><div class="enote">แนวรับแข็งที่สุด ถ้า A แตก</div></div><div><div class="eprice" id="e-b">—</div><div class="esl warn" id="e-bsl">—</div></div></div>
-            <div class="entry-row"><div class="edot" style="background:#378ADD;"></div><div class="einfo"><div class="ezone">Zone C — Grid Bot Range</div><div class="enote">ช่วงที่เหมาะ set Grid Bot</div></div><div><div class="eprice" id="e-c">—</div><div class="esl" style="color:#378ADD;" id="e-csl">—</div></div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid g2 sec">
-        <div class="card">
-          <div class="card-title"><span class="cdot" style="background:var(--g);"></span>Technical Signals</div>
-          <div class="row"><span class="rl">MACD</span><span class="rv" id="s-macd">—</span></div>
-          <div class="row"><span class="rl">MA50 vs MA200</span><span class="rv" id="s-ma">—</span></div>
-          <div class="row"><span class="rl">Support XAU ใกล้</span><span class="rv up" id="s-sup">—</span></div>
-          <div class="row"><span class="rl">Resistance XAU</span><span class="rv dn" id="s-res">—</span></div>
-        </div>
-        <div class="grid" style="gap:10px;">
-          <div class="card" style="background:rgba(29,158,117,.08);border-color:rgba(29,158,117,.3);">
-            <div style="font-size:11px;font-weight:600;color:var(--g);margin-bottom:5px;">📈 Bullish Scenario</div>
-            <div style="font-size:12px;color:var(--g);line-height:1.6;" id="bull-s">—</div>
-          </div>
-          <div class="card" style="background:rgba(226,75,74,.08);border-color:rgba(226,75,74,.3);">
-            <div style="font-size:11px;font-weight:600;color:var(--red);margin-bottom:5px;">📉 Bearish Scenario</div>
-            <div style="font-size:12px;color:var(--red);line-height:1.6;" id="bear-s">—</div>
-          </div>
-        </div>
-      </div>
-      <div style="font-size:10px;color:var(--tx3);background:var(--bg2);border-radius:var(--rs);padding:8px 12px;border:1px solid var(--br);">⚠️ Rex วิเคราะห์เพื่อประกอบการตัดสินใจเท่านั้น ไม่ใช่คำแนะนำการลงทุน ตลาดมีความเสี่ยงสูง</div>
-
-      <!-- ===== AI COIN SCANNER ===== -->
-      <div style="margin-top:14px;">
-        <div class="card">
-          <div class="card-title">
-            <span><span class="cdot" style="background:#7F77DD;"></span>AI สแกนเหรียญน่าสนใจประจำวัน</span>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:10px;color:var(--tx3);" id="scan-time"></span>
-              <button id="scan-btn" onclick="scanCoins()" style="background:rgba(127,119,221,.2);color:#AFA9EC;border:1px solid rgba(127,119,221,.4);padding:5px 14px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(127,119,221,.35)'" onmouseout="this.style.background='rgba(127,119,221,.2)'">🔍 สแกนตลาดวันนี้</button>
-            </div>
-          </div>
-
-          <!-- SUMMARY -->
-          <div id="scan-summary" style="display:none;font-size:12px;color:var(--tx2);background:var(--bg3);border-radius:var(--rs);padding:9px 12px;margin-bottom:10px;line-height:1.65;border-left:2px solid #7F77DD;"></div>
-
-          <!-- LOADING -->
-          <div id="scan-loading" style="display:none;text-align:center;padding:1.5rem 0;">
-            <div style="display:flex;gap:5px;align-items:center;justify-content:center;margin-bottom:8px;">
-              <span style="width:7px;height:7px;border-radius:50%;background:#7F77DD;animation:blink 1.2s infinite;display:inline-block;"></span>
-              <span style="width:7px;height:7px;border-radius:50%;background:#7F77DD;animation:blink 1.2s .2s infinite;display:inline-block;"></span>
-              <span style="width:7px;height:7px;border-radius:50%;background:#7F77DD;animation:blink 1.2s .4s infinite;display:inline-block;"></span>
-            </div>
-            <div style="font-size:12px;color:var(--tx3);">AI กำลังค้นหาข้อมูลตลาดล่าสุด...</div>
-          </div>
-
-          <!-- ERROR -->
-          <div id="scan-error" style="display:none;font-size:12px;color:var(--red);background:rgba(226,75,74,.1);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:10px 14px;text-align:center;">
-            ❌ <span id="scan-error-msg">เกิดข้อผิดพลาด</span> — <button onclick="scanCoins()" style="color:var(--red);background:none;border:none;cursor:pointer;font-size:12px;text-decoration:underline;font-family:inherit;">กดสแกนใหม่</button>
-          </div>
-
-          <!-- COIN CARDS -->
-          <div id="scan-cards" style="display:none;">
-            <div id="coin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
-          </div>
-
-          <!-- KEY HINT -->
-          <div id="scan-key-hint" style="display:none;font-size:11px;color:var(--amb);background:rgba(239,159,39,.1);border:1px solid rgba(239,159,39,.3);border-radius:var(--rs);padding:8px 12px;">
-            ⚠️ ต้องใส่ Anthropic API Key ที่หน้า ⚙️ ก่อนถึงจะใช้งานได้ครับ
-          </div>
-
-          <!-- DISCLAIMER -->
-          <div style="font-size:10px;color:var(--tx3);line-height:1.6;padding-top:8px;border-top:1px solid var(--br);margin-top:4px;" id="scan-footer" style="display:none;">
-            ข้อมูลโดยประมาณจากการค้นเว็บ ไม่ใช่คำแนะนำการลงทุน เช็กราคาจริงบนแอปเทรดและรอสัญญาณระบบยืนยันก่อนเข้าเสมอ
-          </div>
+    <!-- POSITION -->
+    <div class="card">
+      <div class="card-title"><span>โพซิชั่นของเรา</span><button class="pos-edit" onclick="showPage('plan')">แก้แผน →</button></div>
+      <div class="pos-status">
+        <div class="pos-light ok" id="pos-light"></div>
+        <div class="pos-text">
+          <div class="pos-main" id="pos-main">ยังไม่มีโพซิชั่น</div>
+          <div class="pos-sub" id="pos-sub">เขียนแผนที่แท็บ Plan แล้วสถานะจะโชว์ที่นี่</div>
         </div>
       </div>
     </div>
 
-    <!-- ===== NOVA ===== -->
-    <div id="page-nova" class="page">
-      <div class="nova-daily">
-        <div class="nova-day-title">🎬 Nova Daily Brief — <span id="nova-date">วันนี้</span></div>
-        <div style="font-size:12px;color:var(--tx2);margin-bottom:10px;" id="nova-intro">Nova กำลังเตรียม brief สำหรับวันนี้...</div>
-
-        <div class="sec-label" style="margin-bottom:6px;">Trend ที่ควรทำวันนี้</div>
-        <div id="nova-trends">
-          <div class="trend-item"><div class="trend-num">1</div><div class="trend-body"><div class="trend-title">📱 Tech Review / Unboxing</div><div class="trend-desc">สินค้า IT และ Gadget กำลัง viral ใน TikTok ไทย</div><div class="trend-use">→ ถ่ายรีวิวสินค้า + ปักตะกร้า Affiliate</div></div></div>
-          <div class="trend-item"><div class="trend-num">2</div><div class="trend-body"><div class="trend-title">💰 Crypto & Passive Income</div><div class="trend-desc">Content เรื่อง Bot Trade / Dual Asset ดึงดูด audience ที่มีกำลังซื้อ</div><div class="trend-use">→ เล่าประสบการณ์จริงของคุณออยล์</div></div></div>
-          <div class="trend-item"><div class="trend-num">3</div><div class="trend-body"><div class="trend-title">🏢 งาน IT / COBOL Mainframe</div><div class="trend-desc">คนไทยไม่รู้ว่า COBOL ยังใช้งานอยู่ — Hook ดีมาก</div><div class="trend-use">→ "ทำไมธนาคารยังใช้ภาษาอายุ 60 ปี?"</div></div></div>
-        </div>
-
-        <div class="sec-label" style="margin:12px 0 6px;">เวลาโพสต์ที่ดีที่สุดวันนี้</div>
-        <div class="time-rec">
-          <div class="time-pill">🕕 06:00–08:00 (เช้า)</div>
-          <div class="time-pill">🕛 12:00–13:00 (เที่ยง)</div>
-          <div class="time-pill">🕕 17:00–20:00 (เย็น ✅ ดีสุด)</div>
-        </div>
-
-        <div class="sec-label" style="margin:12px 0 6px;">Hashtag แนะนำวันนี้</div>
-        <div class="hashtag-wrap" id="nova-hashtags">
-          <span class="hashtag">#tiktokshop</span><span class="hashtag">#ปักตะกร้า</span><span class="hashtag">#แนะนำสินค้า</span><span class="hashtag">#passive income</span><span class="hashtag">#crypto</span><span class="hashtag">#BTC</span><span class="hashtag">#ทองคำ</span><span class="hashtag">#COBOL</span><span class="hashtag">#Mainframe</span><span class="hashtag">#programmerไทย</span>
-        </div>
-      </div>
-
-      <div class="card sec">
-        <div class="card-title"><span class="cdot" style="background:var(--amb);"></span>Script สำเร็จรูป — แก้ชื่อสินค้าแล้วใช้เลย</div>
-        <div class="script-preview">
-          <div class="script-label">Hook (3 วิแรก)</div>
-          <div class="script-content" id="nova-hook">"รู้ไหมว่าสิ่งนี้ทำให้ฉันประหยัดได้ [X] บาทต่อเดือน?"</div>
-        </div>
-        <div class="script-preview" style="margin-top:6px;">
-          <div class="script-label">Script หลัก</div>
-          <div class="script-content" id="nova-script">ฉันใช้ [ชื่อสินค้า] มาได้ [X] เดือนแล้ว สิ่งที่ดีที่สุดคือ [จุดเด่น] ราคาแค่ [ราคา] บาท คุ้มมากๆ ใครสนใจปักตะกร้าไว้ได้เลยนะคะ</div>
-        </div>
-        <div class="script-preview" style="margin-top:6px;">
-          <div class="script-label">CTA</div>
-          <div class="script-content" id="nova-cta">ปักตะกร้าเก็บไว้เลยนะคะ ของมีจำนวนจำกัด 🛒</div>
-        </div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn-o" onclick="copyScript()">📋 คัดลอก Script</button>
-          <button class="btn-o" onclick="nav('chat',document.querySelectorAll('.nt')[4]);setTimeout(()=>{selectAgent('nova',document.getElementById('ab-nova'));},100)">✨ ให้ Nova สร้าง Script ใหม่ (ต้องใช้ Key)</button>
-        </div>
+    <!-- TASKS -->
+    <div class="card">
+      <div class="card-title"><span>วันนี้ทำอะไร</span><span style="font-size:11px;color:var(--amb);" id="task-count">0</span></div>
+      <div id="task-list"></div>
+      <div class="task-add-row">
+        <input class="task-input" id="task-input" placeholder="เพิ่มสิ่งที่ต้องทำ..." onkeydown="if(event.key==='Enter')addTask()"/>
+        <button class="btn" onclick="addTask()">+</button>
       </div>
     </div>
 
-    <!-- ===== OIL TECH ===== -->
-    <div id="page-oil" class="page">
-      <div class="card sec">
-        <div class="card-title"><span class="cdot" style="background:var(--pu);"></span>COBOL — Quick Reference</div>
-        <div id="cobol-refs">
-          <div class="ref-item" onclick="toggleRef(this)">
-            <div class="ref-title">PERFORM VARYING — Loop<span class="copy-badge" onclick="copyCode(this,event)">copy</span></div>
-            <div class="ref-code">PERFORM VARYING WS-IDX FROM 1 BY 1
-    UNTIL WS-IDX > WS-MAX-ROWS
-    MOVE WS-TABLE(WS-IDX) TO WS-WORK
-    PERFORM PROCESS-RECORD
-END-PERFORM</div>
-          </div>
-          <div class="ref-item" onclick="toggleRef(this)">
-            <div class="ref-title">READ FILE with AT END<span class="copy-badge" onclick="copyCode(this,event)">copy</span></div>
-            <div class="ref-code">READ INPUT-FILE INTO WS-RECORD
-    AT END
-        SET WS-EOF TO TRUE
-    NOT AT END
-        PERFORM PROCESS-RECORD
-END-READ</div>
-          </div>
-          <div class="ref-item" onclick="toggleRef(this)">
-            <div class="ref-title">DB2 CURSOR — Fetch Loop<span class="copy-badge" onclick="copyCode(this,event)">copy</span></div>
-            <div class="ref-code">EXEC SQL DECLARE C1 CURSOR FOR
-    SELECT EMP-ID, EMP-NAME
-    FROM EMPLOYEE
-    WHERE DEPT = :WS-DEPT
-END-EXEC.
-
-EXEC SQL OPEN C1 END-EXEC.
-PERFORM UNTIL SQLCODE NOT = 0
-    EXEC SQL FETCH C1
-        INTO :WS-EMP-ID, :WS-EMP-NAME
-    END-EXEC
-    IF SQLCODE = 0
-        PERFORM PROCESS-EMP
-    END-IF
-END-PERFORM.
-EXEC SQL CLOSE C1 END-EXEC.</div>
-          </div>
-          <div class="ref-item" onclick="toggleRef(this)">
-            <div class="ref-title">STRING / UNSTRING<span class="copy-badge" onclick="copyCode(this,event)">copy</span></div>
-            <div class="ref-code">STRING WS-FIRST-NAME DELIMITED SPACE
-       ' '             DELIMITED SIZE
-       WS-LAST-NAME  DELIMITED SPACE
-  INTO WS-FULL-NAME
-  WITH POINTER WS-PTR
-  ON OVERFLOW PERFORM HANDLE-OVERFLOW
-END-STRING
-
-UNSTRING WS-FULL-NAME
-  DELIMITED BY ',' OR SPACE
-  INTO WS-PART1 WS-PART2
-END-UNSTRING</div>
-          </div>
-          <div class="ref-item" onclick="toggleRef(this)">
-            <div class="ref-title">VSAM KSDS — Random Read<span class="copy-badge" onclick="copyCode(this,event)">copy</span></div>
-            <div class="ref-code">MOVE WS-SEARCH-KEY TO VSAM-KEY
-READ VSAM-FILE INTO WS-RECORD
-    KEY IS VSAM-KEY
-    INVALID KEY
-        MOVE 'NOT FOUND' TO WS-STATUS
-    NOT INVALID KEY
-        PERFORM PROCESS-FOUND
-END-READ</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card sec">
-        <div class="card-title"><span class="cdot" style="background:#378ADD;"></span>DataStage — Quick Tips</div>
-        <div id="ds-refs">
-          <div class="ref-item" onclick="toggleRef(this)">
-            <div class="ref-title">Parallel Job — Transformer Expression<span class="copy-badge" onclick="copyCode(this,event)">copy</span></div>
-            <div class="ref-code">-- Trim และ Upper
-Trim(FieldName, ' ', 'B')
-Oconv(FieldName, 'MCU')
-
--- Date Convert
-Iconv('2024-01-15', 'D-YMD')
-Oconv(DateField, 'D/MDY[2,2,4]')
-
--- Null Check
-If IsNull(FieldName) Then '' Else FieldName</div>
-          </div>
-          <div class="ref-item" onclick="toggleRef(this)">
-            <div class="ref-title">Job Parameter — Runtime ใน Sequence<span class="copy-badge" onclick="copyCode(this,event)">copy</span></div>
-            <div class="ref-code">-- Parameter ใน Job
-#PARAM_NAME#
-
--- ใช้ใน Before/After Routine
-param = GetJobParam("PARAM_NAME")
-
--- Set Parameter จาก Sequence
-SetJobParam("RUN_DATE", "20240115")</div>
-          </div>
-          <div class="ref-item" onclick="toggleRef(this)">
-            <div class="ref-title">Common Error Codes<span class="copy-badge" onclick="copyCode(this,event)">copy</span></div>
-            <div class="ref-code">S0C7  = Data Exception (bad numeric data)
-S0C4  = Protection Exception (null pointer / bad address)
-S222  = Job cancelled by operator
-S806  = Load module not found
-S837  = Out of DASD space
-B37   = Out of space on specific volume
-D37   = Dataset out of space (need more extents)
-E37   = No more volumes to allocate</div>
-          </div>
-        </div>
-      </div>
-
-      <div style="text-align:center;margin-top:8px;">
-        <button class="btn-o" onclick="nav('chat',document.querySelectorAll('.nt')[4]);setTimeout(()=>{selectAgent('oil',document.getElementById('ab-oil'));},100)">💬 ถามคำถามเพิ่มเติมกับ Oil (ต้องใช้ Key)</button>
-      </div>
-    </div>
-
-    <!-- ===== CHAT ===== -->
-    <div id="page-chat" class="page" style="padding:0;overflow:hidden;">
-      <div class="chat-page">
-        <div class="agent-bar">
-          <button class="ab active" id="ab-aria" onclick="selectAgent('aria',this)"><div class="ab-av" style="background:var(--gl);">📋</div>Aria</button>
-          <button class="ab" id="ab-rex" onclick="selectAgent('rex',this)"><div class="ab-av" style="background:var(--bl);">📊</div>Rex</button>
-          <button class="ab" id="ab-nova" onclick="selectAgent('nova',this)"><div class="ab-av" style="background:var(--al);">🎬</div>Nova</button>
-          <button class="ab" id="ab-oil" onclick="selectAgent('oil',this)"><div class="ab-av" style="background:var(--pl);">💻</div>Oil</button>
-        </div>
-        <div class="chat-msgs" id="chat-msgs"></div>
-        <div class="input-area">
-          <div class="input-row">
-            <textarea class="chat-ta" id="chat-ta" placeholder="พิมพ์ข้อความ..." rows="1" onkeydown="chatKey(event)" oninput="chatResize(this)"></textarea>
-            <button class="send-btn" id="send-btn" onclick="chatSend()">➤</button>
-          </div>
-          <div class="hint" id="chat-hint"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== SETUP ===== -->
-    <div id="page-setup" class="page">
-      <div style="max-width:420px;margin:2rem auto;">
-        <div class="card">
-          <div class="card-title"><span class="cdot" style="background:var(--g);"></span>Anthropic API Key</div>
-          <div style="font-size:12px;color:var(--tx2);margin-bottom:12px;line-height:1.65;">ใส่ Key เพื่อเปิดใช้งาน Chat กับ AI Team<br>Key เก็บในเบราว์เซอร์เครื่องนี้เท่านั้น ปลอดภัย</div>
-          <div style="display:flex;gap:8px;margin-bottom:8px;">
-            <input type="password" id="key-in" placeholder="sk-ant-api03-..." style="flex:1;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:8px 12px;font-size:12px;color:var(--tx);font-family:monospace;outline:none;"/>
-            <button class="btn-g" onclick="saveKey()">บันทึก</button>
-          </div>
-          <div style="font-size:11px;color:var(--tx3);line-height:1.65;">สมัครฟรีที่ <a href="https://console.anthropic.com" target="_blank" style="color:var(--g);">console.anthropic.com</a> → API Keys<br>ค่าใช้จ่าย ~10–30 ฿/เดือน (ถูกกว่า subscription มาก)</div>
-          <div id="key-ok" style="font-size:11px;color:var(--g);margin-top:8px;display:none;">✅ บันทึก Key แล้ว พร้อมใช้งาน Chat</div>
-        </div>
-      </div>
+    <!-- SCAN -->
+    <div class="card">
+      <div class="card-title"><span style="color:#AFA9EC;">🔍 AI สแกนเหรียญ (CDC Style)</span><span style="font-size:10px;color:var(--tx3);" id="scan-time"></span></div>
+      <div class="key-hint" id="scan-key-hint">⚠️ ใส่ API Key ที่แท็บ ⚙️ ก่อนครับ</div>
+      <div class="scan-summary" id="scan-summary"></div>
+      <div class="scan-loading" id="scan-loading"><div class="dots"><span></span><span></span><span></span></div><div style="margin-top:8px;">Rex กำลังสแกนตลาด...</div></div>
+      <div class="scan-error" id="scan-error">❌ <span id="scan-error-msg"></span> — <button onclick="scanCoins()">สแกนใหม่</button></div>
+      <div id="coin-list"></div>
+      <button class="btn btn-purple btn-full" id="scan-btn" onclick="scanCoins()">🔍 สแกนตลาดวันนี้ (~3.5฿)</button>
+      <div class="scan-note" style="margin-top:10px;">ข้อมูลโดยประมาณจากการค้นเว็บ ไม่ใช่คำแนะนำการลงทุน เช็กราคาจริงบน Bybit และรอ CDC ยืนยันก่อนเข้าเสมอ</div>
     </div>
 
   </div>
+
+  <!-- ========== REX ========== -->
+  <div id="page-rex" class="page">
+    <div class="price-hero">
+      <div class="ph-item">
+        <div class="ph-sym">BTC / USD</div>
+        <div class="ph-price" id="r-btc">—</div>
+        <div class="ph-chg" id="r-btc-c">—</div>
+      </div>
+      <div class="ph-item">
+        <div class="ph-sym">XAU / USD</div>
+        <div class="ph-price" id="r-xau">—</div>
+        <div class="ph-chg" id="r-xau-c">—</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>BTC — 30 วัน</span></div>
+      <div class="chart-wrap"><canvas id="btc-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>สัญญาณ</span></div>
+      <div class="sig-row"><span class="sig-name">RSI (โดยประมาณ)</span><span class="sig-val" id="s-rsi">—</span></div>
+      <div class="sig-row"><span class="sig-name">Momentum 24h</span><span class="sig-val" id="s-mom">—</span></div>
+      <div class="sig-row"><span class="sig-name">Overall</span><span class="sig-val" id="s-sig">—</span></div>
+    </div>
+    <div class="card" style="font-size:12px;color:var(--tx3);line-height:1.6;">⚠️ ประกอบการตัดสินใจเท่านั้น เช็ค CDC ActionZone จริงใน TradingView ก่อนเข้าเสมอ</div>
+  </div>
+
+  <!-- ========== PLAN ========== -->
+  <div id="page-plan" class="page">
+    <div class="card">
+      <div class="card-title"><span>📌 Trade Plan</span><span class="tp-saved" id="tp-saved">✓ บันทึกแล้ว</span></div>
+      <textarea class="tp-body" id="tp-body" placeholder="LIT — Entry Plan
+├ ไม้ 1: 25% @ $2.50 ✓
+├ ไม้ 2: เติมที่ $2.00-2.10 (CDC ยังเขียว)
+├ Stop: ปิด Daily < $1.95 → ออกหมด
+└ ห้าม: เติมไล่ราคาเหนือ $2.50" oninput="saveTradePlan()"></textarea>
+      <div style="font-size:11px;color:var(--tx3);margin-top:8px;">บันทึกอัตโนมัติ · บรรทัดแรกจะโชว์เป็นสถานะโพซิชั่นหน้า Today</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>💰 รายได้เสริมเดือนนี้</span></div>
+      <div class="inc-row"><span class="inc-name">🎬 TikTok Affiliate</span><span class="inc-val up" id="i-tiktok">฿0</span></div>
+      <div class="inc-row"><span class="inc-name">📈 เทรด (กำไร/ขาดทุนจริง)</span><span class="inc-val" id="i-trade">฿0</span></div>
+      <div class="inc-row"><span class="inc-name">💼 อื่นๆ</span><span class="inc-val" id="i-other">฿0</span></div>
+      <div class="inc-row" style="border-top:2px solid var(--br2);"><span class="inc-name" style="font-weight:600;color:var(--tx);">รวม</span><span class="inc-val up" style="font-size:17px;" id="i-total">฿0</span></div>
+      <div class="inc-add">
+        <input id="inc-val" type="number" placeholder="จำนวน (ลบได้ถ้าขาดทุน)"/>
+        <select id="inc-type"><option value="tiktok">TikTok</option><option value="trade">เทรด</option><option value="other">อื่นๆ</option></select>
+        <button class="btn" onclick="addIncome()">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CHAT ========== -->
+  <div id="page-chat" class="page">
+    <div class="chat-container">
+      <div class="agent-row">
+        <button class="ab active" id="ab-aria" onclick="selectAgent('aria',this)">📋 Aria</button>
+        <button class="ab" id="ab-rex" onclick="selectAgent('rex',this)">📊 Rex</button>
+        <button class="ab" id="ab-nova" onclick="selectAgent('nova',this)">🎬 Nova</button>
+      </div>
+      <div class="chat-msgs" id="chat-msgs"></div>
+      <div class="chat-input-row">
+        <textarea class="chat-ta" id="chat-ta" placeholder="พิมพ์..." rows="1" onkeydown="chatKey(event)" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+        <button class="send-btn" id="send-btn" onclick="chatSend()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SETUP ========== -->
+  <div id="page-setup" class="page">
+    <div class="card">
+      <div class="card-title"><span>🔑 Anthropic API Key</span></div>
+      <div class="key-input-row">
+        <input type="password" class="key-input" id="key-in" placeholder="sk-ant-api03-..."/>
+        <button class="btn" onclick="saveKey()">บันทึก</button>
+      </div>
+      <div class="small-note">Key เก็บในเครื่องนี้เท่านั้น · สมัครที่ <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br>ใช้กับ: สแกนเหรียญ (~3.5฿/ครั้ง) และ Chat (~0.1฿/ข้อความ)</div>
+      <div id="key-ok" style="font-size:12px;color:var(--g);margin-top:8px;display:none;">✅ พร้อมใช้งาน</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>เคล็ดลับประหยัด</span></div>
+      <div style="font-size:13px;color:var(--tx2);line-height:1.8;">
+        · สแกนวันละ 1 ครั้งพอ ผลถูกเก็บไว้ดูซ้ำได้ฟรี<br>
+        · ตั้ง Price Alert ใน Bybit แทนการเช็คบ่อยๆ<br>
+        · วิเคราะห์ยาวๆ ไปคุยใน Claude.ai (ฟรีตาม plan)<br>
+        · Chat ในนี้ใช้ถามสั้นๆ เร็วๆ พอ
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bn active" id="bn-today" onclick="showPage('today')"><span class="bn-icon">🏠</span>Today</button>
+  <button class="bn" id="bn-rex" onclick="showPage('rex')"><span class="bn-icon">📊</span>Rex</button>
+  <button class="bn" id="bn-plan" onclick="showPage('plan')"><span class="bn-icon">📌</span>Plan</button>
+  <button class="bn" id="bn-chat" onclick="showPage('chat')"><span class="bn-icon">💬</span>Chat</button>
+  <button class="bn" id="bn-setup" onclick="showPage('setup')"><span class="bn-icon">⚙️</span>ตั้งค่า</button>
 </div>
 
 <script>
-// ===== CLOCK =====
-setInterval(()=>{
-  const n=new Date();
-  document.getElementById('clock').textContent=n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  checkReminders();
-},1000);
+// ===== STATE =====
+let apiKey = localStorage.getItem('is_key') || '';
+let tasks = JSON.parse(localStorage.getItem('is_tasks') || '[]');
+let income = JSON.parse(localStorage.getItem('is_income2') || '{"tiktok":0,"trade":0,"other":0}');
+let histories = {aria:[],rex:[],nova:[]};
+let curAgent = 'aria';
+let chatBusy = false;
+let btcChart = null;
 
 // ===== NAV =====
-function nav(p,btn){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.nt').forEach(x=>x.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
-  if(btn) btn.classList.add('active');
-  if(p==='rex'&&!rexLoaded) loadRex();
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.bn').forEach(x => x.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  document.getElementById('bn-' + p).classList.add('active');
+  if (p === 'rex' && !window._rexLoaded) loadRexPage();
+  if (p === 'chat') renderChat();
+}
+
+// ===== DATE =====
+const days = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'];
+const d = new Date();
+document.getElementById('today-date').textContent = 'วัน' + days[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1);
+
+// ===== MARKET (Today) =====
+async function loadMarket() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,pax-gold&vs_currencies=usd&include_24hr_change=true');
+    if (!r.ok) throw new Error();
+    const dd = await r.json();
+    setMkt('m-btc', 'm-btc-c', dd.bitcoin.usd, dd.bitcoin.usd_24h_change);
+    setMkt('m-eth', 'm-eth-c', dd.ethereum.usd, dd.ethereum.usd_24h_change);
+    if (dd['pax-gold'] && dd['pax-gold'].usd > 1000) setMkt('m-xau', 'm-xau-c', dd['pax-gold'].usd, dd['pax-gold'].usd_24h_change);
+    document.getElementById('mkt-upd').textContent = new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+    window._mktData = dd;
+  } catch(e) {
+    document.getElementById('mkt-upd').textContent = 'โหลดไม่ได้ ลอง refresh';
+  }
+}
+function setMkt(pid, cid, price, chg) {
+  document.getElementById(pid).textContent = '$' + Math.round(price).toLocaleString();
+  const el = document.getElementById(cid);
+  el.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%';
+  el.className = 'mkt-chg ' + (chg >= 0 ? 'up' : 'dn');
+}
+loadMarket();
+setInterval(loadMarket, 120000);
+
+// ===== POSITION STATUS (from trade plan first line) =====
+function updatePosition() {
+  const plan = localStorage.getItem('is_tradeplan2') || '';
+  const light = document.getElementById('pos-light');
+  const main = document.getElementById('pos-main');
+  const sub = document.getElementById('pos-sub');
+  if (!plan.trim()) {
+    light.className = 'pos-light ok';
+    main.textContent = 'ยังไม่มีโพซิชั่น';
+    sub.textContent = 'เขียนแผนที่แท็บ Plan แล้วสถานะจะโชว์ที่นี่';
+    return;
+  }
+  const firstLine = plan.split('\n')[0].trim();
+  main.textContent = firstLine;
+  sub.textContent = 'เช็คราคาจริง + alert ใน Bybit · แตะ "แก้แผน" เพื่อดูแผนเต็ม';
+  light.className = 'pos-light ok';
+}
+
+// ===== TASKS =====
+function saveTasks() { localStorage.setItem('is_tasks', JSON.stringify(tasks)); }
+function renderTasks() {
+  const list = document.getElementById('task-list');
+  const pending = tasks.filter(t => !t.done).length;
+  document.getElementById('task-count').textContent = pending + ' ค้าง';
+  if (!tasks.length) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--tx3);padding:8px 0;">ว่างเลย เพิ่มด้านล่างครับ</div>';
+    return;
+  }
+  list.innerHTML = tasks.map((t, i) => `
+    <div class="task-item">
+      <button class="task-cb${t.done ? ' done' : ''}" onclick="toggleTask(${i})">${t.done ? '✓' : ''}</button>
+      <div class="task-text${t.done ? ' done' : ''}">${t.text}</div>
+      <button class="task-del" onclick="delTask(${i})">×</button>
+    </div>`).join('');
+}
+function addTask(txt) {
+  const text = txt || document.getElementById('task-input').value.trim();
+  if (!text) return;
+  tasks.push({text, done: false});
+  saveTasks(); renderTasks();
+  if (!txt) document.getElementById('task-input').value = '';
+}
+function toggleTask(i) { tasks[i].done = !tasks[i].done; saveTasks(); renderTasks(); }
+function delTask(i) { tasks.splice(i, 1); saveTasks(); renderTasks(); }
+
+// Seed default tasks on first run
+if (!localStorage.getItem('is_seeded')) {
+  tasks = [
+    {text: '🎬 โพสต์คลิป TikTok (17:00-20:00)', done: false},
+    {text: '🔍 สแกนเหรียญประจำวัน', done: false},
+    {text: '📊 เช็ค CDC LIT ใน TradingView', done: false}
+  ];
+  saveTasks();
+  localStorage.setItem('is_seeded', '1');
+}
+
+// ===== TRADE PLAN =====
+let tpTimer = null;
+function saveTradePlan() {
+  clearTimeout(tpTimer);
+  tpTimer = setTimeout(() => {
+    localStorage.setItem('is_tradeplan2', document.getElementById('tp-body').value);
+    const s = document.getElementById('tp-saved');
+    s.style.display = 'inline';
+    setTimeout(() => s.style.display = 'none', 1500);
+    updatePosition();
+  }, 400);
+}
+function loadTradePlan() {
+  const saved = localStorage.getItem('is_tradeplan2') || localStorage.getItem('is_tradeplan') || '';
+  if (saved) document.getElementById('tp-body').value = saved;
+  updatePosition();
+}
+
+// ===== INCOME =====
+function renderIncome() {
+  document.getElementById('i-tiktok').textContent = '฿' + income.tiktok.toLocaleString();
+  const tr = document.getElementById('i-trade');
+  tr.textContent = '฿' + income.trade.toLocaleString();
+  tr.className = 'inc-val ' + (income.trade >= 0 ? 'up' : 'dn');
+  document.getElementById('i-other').textContent = '฿' + income.other.toLocaleString();
+  const total = income.tiktok + income.trade + income.other;
+  document.getElementById('i-total').textContent = '฿' + total.toLocaleString();
+}
+function addIncome() {
+  const v = parseFloat(document.getElementById('inc-val').value) || 0;
+  if (!v) return;
+  const t = document.getElementById('inc-type').value;
+  income[t] += v;
+  localStorage.setItem('is_income2', JSON.stringify(income));
+  document.getElementById('inc-val').value = '';
+  renderIncome();
 }
 
 // ===== KEY =====
-let apiKey=localStorage.getItem('is_key')||'';
-function saveKey(){
-  const k=document.getElementById('key-in').value.trim();
-  if(!k.startsWith('sk-ant')){alert('Key ไม่ถูกต้องครับ');return;}
-  localStorage.setItem('is_key',k);apiKey=k;
-  document.getElementById('key-ok').style.display='block';
-  document.getElementById('chat-hint').textContent='';
-  alert('✅ บันทึก Key แล้วครับ!');
+function saveKey() {
+  const k = document.getElementById('key-in').value.trim();
+  if (!k.startsWith('sk-ant')) { alert('Key ไม่ถูกต้องครับ'); return; }
+  localStorage.setItem('is_key', k); apiKey = k;
+  document.getElementById('key-ok').style.display = 'block';
+  document.getElementById('scan-key-hint').style.display = 'none';
 }
 
-// ===== ARIA — TASKS =====
-let tasks=JSON.parse(localStorage.getItem('is_tasks')||'[]');
-function saveTasks(){localStorage.setItem('is_tasks',JSON.stringify(tasks));}
-function renderTasks(){
-  const list=document.getElementById('task-list');
-  const count=document.getElementById('task-count');
-  const pending=tasks.filter(t=>!t.done).length;
-  count.textContent=pending+' รายการ';
-  if(!tasks.length){list.innerHTML='<div style="font-size:12px;color:var(--tx3);padding:.5rem 0;">ยังไม่มี task — เพิ่มด้านล่างได้เลยครับ</div>';return;}
-  list.innerHTML=tasks.map((t,i)=>`
-    <div class="task-item">
-      <div class="task-cb${t.done?' done':''}" onclick="toggleTask(${i})">${t.done?'✓':''}</div>
-      <div class="task-text${t.done?' done':''}">${t.text}${t.time?`<span class="reminder-badge">⏰ ${t.time}</span>`:''}</div>
-      <div class="task-del" onclick="delTask(${i})">×</div>
-    </div>`).join('');
-}
-function addTask(text,time){
-  const txt=text||document.getElementById('task-input').value.trim();
-  const t=time!==undefined?time:document.getElementById('task-time').value;
-  if(!txt)return;
-  tasks.push({text:txt,time:t,done:false,created:Date.now()});
-  saveTasks();renderTasks();
-  if(!text){document.getElementById('task-input').value='';document.getElementById('task-time').value='';}
-  if(t&&Notification.permission==='granted'){
-    const[h,m]=t.split(':');const now=new Date();const remind=new Date();
-    remind.setHours(parseInt(h),parseInt(m),0,0);
-    if(remind>now){const ms=remind-now;setTimeout(()=>new Notification('IntelShift — Reminder',{body:txt,icon:''}),ms);}
-  }
-}
-function toggleTask(i){tasks[i].done=!tasks[i].done;saveTasks();renderTasks();}
-function delTask(i){tasks.splice(i,1);saveTasks();renderTasks();}
-function checkReminders(){} // handled at addTask
-
-// ===== ARIA — INCOME TRACKER =====
-let income=JSON.parse(localStorage.getItem('is_income')||'{"tiktok":0,"bot":0,"dual":0}');
-function updateIncome(){
-  const val=parseFloat(document.getElementById('inc-val').value)||0;
-  const type=document.getElementById('inc-type').value;
-  income[type]+=val;
-  localStorage.setItem('is_income',JSON.stringify(income));
-  document.getElementById('inc-val').value='';
-  renderIncome();
-}
-function renderIncome(){
-  document.getElementById('inc-tiktok').textContent='฿'+income.tiktok.toLocaleString();
-  document.getElementById('inc-bot').textContent='$'+income.bot.toFixed(2);
-  document.getElementById('inc-dual').textContent='$'+income.dual.toFixed(2);
-  const total=income.tiktok+(income.bot+income.dual)*33;
-  document.getElementById('inc-total').textContent='฿'+Math.round(total).toLocaleString();
-}
-
-// ===== ARIA — DAILY BRIEF =====
-function ariaDaily(){
-  const h=new Date().getHours();
-  let greet='สวัสดีครับคุณออยล์ 👋';
-  let sub='';
-  if(h<12){greet='อรุณสวัสดิ์ครับคุณออยล์ ☀️';sub='เช้านี้มี task รออยู่ และ Rex มีสัญญาณน่าสนใจ อย่าลืมเช็กตลาดก่อนไปทำงานนะครับ';}
-  else if(h<17){greet='สวัสดีตอนบ่ายครับคุณออยล์ 🌤️';sub='ช่วงนี้เป็นเวลาดีสำหรับวางแผน content TikTok สำหรับโพสต์เย็นนี้ครับ Nova มีไอเดียรออยู่';}
-  else{greet='สวัสดีตอนเย็นครับคุณออยล์ 🌙';sub='เวลาดีที่สุดสำหรับโพสต์ TikTok คือตอนนี้เลยครับ และอย่าลืม DCA หรือ check Bot ก่อนนอน';}
-  document.getElementById('greet').textContent=greet;
-  document.getElementById('brief-sub').textContent=sub;
-  const pending=tasks.filter(t=>!t.done);
-  const tips=[];
-  if(pending.length) tips.push(`📋 มี ${pending.length} task ที่ยังไม่เสร็จ`);
-  tips.push('📊 Rex: XAU RSI ต่ำ — อาจเป็นจังหวะ set Grid Bot');
-  tips.push('🎬 Nova: โพสต์ TikTok ช่วง 17:00–20:00 ดีที่สุดวันนี้');
-  tips.push('💰 อย่าลืมอัปเดตรายได้วันนี้ใน Income Tracker');
-  tips.push('🧠 Tip: DCA BTC เดือนละ 1,000–2,000 บาท สม่ำเสมอดีกว่า FOMO');
-  document.getElementById('aria-daily-tips').innerHTML=tips.map(t=>`<div style="padding:4px 0;border-bottom:1px solid var(--br);font-size:12px;">${t}</div>`).join('');
-}
-
-// ===== REX =====
-let rexLoaded=false; let rexChart=null;
-async function loadRex(){
-  try{
-    // CoinGecko free API - works on Netlify without CORS issues
-    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_high_low=true',{headers:{'Accept':'application/json'}});
-    if(!r.ok) throw new Error('API '+r.status);
-    const d=await r.json();
-    const btc=d.bitcoin;
-    const bp=btc.usd;
-    const bc=btc.usd_24h_change||0;
-    document.getElementById('rex-btc').textContent='$'+Math.round(bp).toLocaleString();
-    const bce=document.getElementById('rex-btc-chg');
-    bce.textContent=(bc>=0?'+':'')+bc.toFixed(2)+'% (24h)';
-    bce.className='price-chg '+(bc>=0?'up':'dn');
-    document.getElementById('rex-upd').textContent='อัปเดต '+new Date().toLocaleTimeString('th-TH');
-    document.getElementById('tb-btc').textContent='$'+Math.round(bp).toLocaleString();
-    // RSI approximation from 24h change
-    const rsi=Math.min(78,Math.max(24,Math.round(41+bc*1.5)));
-    document.getElementById('rex-rsi').textContent=rsi;
-    const rsie=document.getElementById('rex-rsi-label');
-    if(rsi>70){rsie.textContent='Overbought ⚠️';rsie.className='price-chg dn';}
-    else if(rsi<30){rsie.textContent='Oversold ✅ (โอกาสซื้อ)';rsie.className='price-chg up';}
-    else{rsie.textContent='Neutral';rsie.className='price-chg warn';}
-    const sige=document.getElementById('rex-signal');
-    const sigse=document.getElementById('rex-signal-sub');
-    if(bc>=-1&&rsi<35){sige.textContent='BUY';sige.className='up';sigse.textContent='Oversold — โอกาสสะสม';}
-    else if(bc<-3){sige.textContent='CAUTION';sige.className='dn';sigse.textContent='แรงขายหนัก ระวัง';}
-    else if(bc<-1){sige.textContent='SELL';sige.className='dn';sigse.textContent='Momentum ขาลง';}
-    else{sige.textContent='HOLD';sige.className='warn';sigse.textContent='Wait & Watch';}
-    document.getElementById('s-macd').textContent=bc>=0?'Bullish':'Bearish';
-    document.getElementById('s-macd').className='rv '+(bc>=0?'up':'dn');
-    document.getElementById('s-ma').textContent=bc>0?'MA50 > MA200 (แนวโน้มขาขึ้น)':'MA50 < MA200 (แนวโน้มขาลง)';
-    document.getElementById('s-ma').className='rv '+(bc>0?'up':'dn');
-    await loadXAU();
-    await loadBTCChart(bp,bc>=0);
-    rexLoaded=true;
-    // auto-refresh every 90 seconds (CoinGecko rate limit friendly)
-    if(!window._rexTimer) window._rexTimer=setInterval(loadRex,90000);
-  }catch(e){
-    console.error('Rex API error:',e);
-    rexMock();
-  }
-}
-async function loadXAU(){
-  try{
-    // Use PAXG (PAX Gold) — token pegged 1:1 to real gold ounce, reliable XAU proxy
-    let xp = 4094; // fallback
-    let xchg = 0;
-    try{
-      const rx=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd&include_24hr_change=true');
-      if(rx.ok){
-        const dx=await rx.json();
-        // sanity check: real gold price must be > $1000/oz
-        if(dx['pax-gold'] && dx['pax-gold'].usd > 1000){
-          xp=dx['pax-gold'].usd;
-          xchg=dx['pax-gold'].usd_24h_change||0;
-        }
-      }
-    }catch(ex){}
-    document.getElementById('rex-xau').textContent='$'+Math.round(xp).toLocaleString();
-    const xce=document.getElementById('rex-xau-chg');
-    xce.textContent=(xchg>=0?'+':'')+xchg.toFixed(2)+'% (24h)';
-    xce.className='price-chg '+(xchg>=0?'up':'dn');
-    document.getElementById('tb-xau').textContent='$'+Math.round(xp).toLocaleString();
-    const xr=Math.round(xp);
-    document.getElementById('s-sup').textContent='$'+(xr-80).toLocaleString()+' – $'+(xr-50).toLocaleString();
-    document.getElementById('s-res').textContent='$'+(xr+100).toLocaleString()+' – $'+(xr+200).toLocaleString();
-    document.getElementById('e-a').textContent='$'+(xr-60).toLocaleString()+' – $'+(xr-30).toLocaleString();
-    document.getElementById('e-asl').textContent='SL: $'+(xr-120).toLocaleString();
-    document.getElementById('e-b').textContent='$'+(xr-100).toLocaleString()+' – $'+(xr-80).toLocaleString();
-    document.getElementById('e-bsl').textContent='SL: $'+(xr-150).toLocaleString();
-    document.getElementById('e-c').textContent='$'+(xr-80)+' – $'+(xr+80)+' (Grid)';
-    document.getElementById('e-csl').textContent='Grid Bot Range แนะนำ';
-    document.getElementById('bull-s').textContent='ยืนเหนือ $'+(xr-50).toLocaleString()+' + PBOC ซื้อต่อ → เป้า $'+(xr+150).toLocaleString();
-    document.getElementById('bear-s').textContent='หลุด $'+(xr-80).toLocaleString()+' → $'+(xr-200).toLocaleString()+' | Fed Hawkish + Dollar แข็ง';
-  }catch(e){}
-}
-async function loadBTCChart(cur,isUp){
-  try{
-    const r=await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily');
-    if(!r.ok) throw new Error();
-    const d=await r.json();
-    const prices=d.prices;
-    drawChart(prices.map(p=>{const dt=new Date(p[0]);return(dt.getMonth()+1)+'/'+dt.getDate();}),prices.map(p=>p[1]),isUp);
-  }catch(e){mockChart(cur,isUp);}
-}
-function rexMock(){
-  document.getElementById('rex-btc').textContent='$63,500';
-  document.getElementById('rex-xau').textContent='$4,094';
-  document.getElementById('rex-rsi').textContent='41';
-  document.getElementById('rex-signal').textContent='HOLD';
-  document.getElementById('rex-signal').className='warn';
-  document.getElementById('tb-btc').textContent='$63,500';
-  document.getElementById('tb-xau').textContent='$4,094';
-  mockChart(63500,true);rexLoaded=true;
-}
-function mockChart(p,isUp){
-  const ps=[],ls=[];let v=p*(isUp?.91:1.09);
-  for(let i=0;i<30;i++){v+=(Math.random()-.47)*v*.022;ps.push(v);const d=new Date();d.setDate(d.getDate()-(30-i));ls.push((d.getMonth()+1)+'/'+d.getDate());}
-  ps[29]=p;drawChart(ls,ps,isUp);
-}
-function drawChart(labels,prices,isUp){
-  const c=isUp?'#1D9E75':'#E24B4A';
-  const ctx=document.getElementById('rex-chart').getContext('2d');
-  if(rexChart)rexChart.destroy();
-  rexChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{data:prices,borderColor:c,borderWidth:1.5,pointRadius:0,tension:.3,fill:false}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+Math.round(c.parsed.y).toLocaleString()}}},
-      scales:{x:{ticks:{font:{size:9},color:'#4a5568',maxTicksLimit:7},grid:{color:'rgba(255,255,255,.03)'},border:{display:false}},
-        y:{ticks:{font:{size:9,family:'JetBrains Mono'},color:'#4a5568',callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'rgba(255,255,255,.03)'},border:{display:false}}}}});
-}
-
-// ===== NOVA =====
-function novaDate(){
-  const days=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'];
-  const d=new Date();
-  document.getElementById('nova-date').textContent=`วัน${days[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`;
-  document.getElementById('nova-intro').textContent=`Nova สรุปไอเดีย content และ trend ที่น่าทำวันนี้ให้คุณออยล์ครับ มี follower 1,000+ แล้ว เริ่มได้เลย!`;
-}
-function copyScript(){
-  const hook=document.getElementById('nova-hook').textContent;
-  const script=document.getElementById('nova-script').textContent;
-  const cta=document.getElementById('nova-cta').textContent;
-  const tags=Array.from(document.querySelectorAll('.hashtag')).map(h=>h.textContent).join(' ');
-  navigator.clipboard.writeText(`HOOK:\n${hook}\n\nSCRIPT:\n${script}\n\nCTA:\n${cta}\n\nHASHTAG:\n${tags}`).then(()=>alert('✅ คัดลอก Script แล้วครับ!'));
-}
-
-// ===== OIL — REF =====
-function toggleRef(el){el.classList.toggle('open');}
-function copyCode(badge,e){
-  e.stopPropagation();
-  const code=badge.closest('.ref-item').querySelector('.ref-code').textContent;
-  navigator.clipboard.writeText(code).then(()=>{badge.textContent='✓ copied!';setTimeout(()=>badge.textContent='copy',1500);});
-}
-
-// ===== CHAT =====
-const AGENTS={
-  aria:{name:'Aria',em:'📋',bg:'#E1F5EE',sys:'คุณคือ Aria ผู้ช่วยส่วนตัวของคุณออยล์ COBOL/DataStage Engineer กรุงเทพฯ ที่กำลังสร้างรายได้เสริมจาก TikTok Shop, Grid Bot XAU, Dual Asset USDT พูดภาษาไทย สุภาพ กระชับ ฉลาด ช่วยจด task แนะนำความรู้ วิเคราะห์สถานการณ์ ลงท้าย "ครับคุณออยล์"',sugg:['สรุปสถานการณ์วันนี้ให้หน่อย','ช่วยวางแผนสัปดาห์นี้','มีอะไรน่าสนใจบ้างวันนี้?','ช่วยจัดลำดับ task ให้หน่อย']},
-  rex:{name:'Rex',em:'📊',bg:'#E6F1FB',sys:'คุณคือ Rex นักวิเคราะห์ตลาดของคุณออยล์ เชี่ยวชาญ BTC XAU Technical Analysis Grid Bot Dual Asset USDT พูดภาษาไทย ตรงไปตรงมา เน้นตัวเลขและ Entry Point ที่ชัดเจน ต้องบอกเสมอว่าไม่ใช่คำแนะนำลงทุน',sugg:['BTC วันนี้น่าซื้อไหม?','Grid Bot XAU ควร set range เท่าไหร่?','Dual Asset USDT ตอนนี้เป็นยังไง?','วิเคราะห์ XAU ให้ละเอียดหน่อย']},
-  nova:{name:'Nova',em:'🎬',bg:'#FAEEDA',sys:'คุณคือ Nova TikTok Content Strategist ของคุณออยล์ที่มี follower 1,000+ และกำลังเปิด TikTok Shop Affiliate เชี่ยวชาญ Hook Script Trend FYP ปักตะกร้า พูดภาษาไทย สดใส creative',sugg:['สร้าง script ขายสินค้า IT','Hook ที่จะหยุดคนเลื่อนได้ดีที่สุด','แนะนำสินค้า Affiliate ที่ขายดีตอนนี้','วิเคราะห์ว่าคลิปแบบไหน viral']},
-  oil:{name:'Oil',em:'💻',bg:'#EEEDFE',sys:'คุณคือ AI ผู้ช่วยเทคนิคของคุณออยล์ เชี่ยวชาญ COBOL DataStage IBM Mainframe z/OS JCL VSAM DB2 ETL Pipeline ตอบตรงประเด็น ใส่ code block เสมอ บอก best practice และ pitfall',sugg:['อธิบาย VSAM KSDS vs ESDS','DataStage Lookup Stage ทำงานยังไง?','Debug S0C7 error ต้องดูอะไรบ้าง?','JCL DISP parameter อธิบายหน่อย']}
-};
-let curAgent='aria';
-let histories={aria:[],rex:[],nova:[],oil:[]};
-let chatBusy=false;
-
-function selectAgent(id,btn){
-  curAgent=id;
-  document.querySelectorAll('.ab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderChat();
-}
-function renderChat(){
-  const a=AGENTS[curAgent];
-  const h=histories[curAgent];
-  const msgs=document.getElementById('chat-msgs');
-  msgs.innerHTML='';
-  if(!h.length){
-    msgs.innerHTML=`<div class="welcome-chat"><div class="wc-em">${a.em}</div><div class="wc-n">${a.name}</div><div class="wc-d" style="color:var(--tx2);">${a.name==='Aria'?'AI Secretary — จดงาน วางแผน แนะนำ':a.name==='Rex'?'Market Analyst — BTC / XAU / Bot Trade':a.name==='Nova'?'TikTok Strategist — Script / Trend / ปักตะกร้า':'COBOL & DataStage Expert'}</div><div class="sugg-wrap">${a.sugg.map(s=>`<button class="sugg" onclick="chatQuick('${s.replace(/'/g,"\\'")}')">${s}</button>`).join('')}</div></div>`;
-  }else{
-    h.forEach(m=>appendMsg(m.role==='user'?'me':'ai',m.content));
-  }
-  document.getElementById('chat-ta').placeholder=`คุยกับ ${a.name}...`;
-  document.getElementById('chat-hint').textContent=apiKey?'':'⚠️ ต้องใส่ API Key ที่หน้า ⚙️ ก่อนถึงจะคุยได้';
-}
-function appendMsg(type,text){
-  const msgs=document.getElementById('chat-msgs');
-  const wc=msgs.querySelector('.welcome-chat');if(wc)wc.remove();
-  const a=AGENTS[curAgent];
-  const div=document.createElement('div');
-  div.className='cmsg'+(type==='me'?' me':'');
-  const av=type==='me'?'<div class="cmsg-av me">O</div>':`<div class="cmsg-av" style="background:${a.bg};font-size:15px;">${a.em}</div>`;
-  const txt=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/```([\s\S]*?)```/g,'<pre>$1</pre>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-  div.innerHTML=av+`<div class="bubble ${type==='me'?'me':'ai'}">${txt}</div>`;
-  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
-}
-function chatQuick(t){document.getElementById('chat-ta').value=t;chatSend();}
-function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();chatSend();}}
-function chatResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
-async function chatSend(){
-  if(chatBusy)return;
-  const ta=document.getElementById('chat-ta');
-  const text=ta.value.trim();if(!text)return;
-  if(!apiKey){alert('กรุณาใส่ API Key ที่หน้า ⚙️ ก่อนนะครับ');nav('setup',document.querySelectorAll('.nt')[5]);return;}
-  ta.value='';ta.style.height='auto';
-  appendMsg('me',text);
-  histories[curAgent].push({role:'user',content:text});
-  chatBusy=true;document.getElementById('send-btn').disabled=true;
-  const msgs=document.getElementById('chat-msgs');
-  const a=AGENTS[curAgent];
-  const td=document.createElement('div');td.className='cmsg';td.id='typing';
-  td.innerHTML=`<div class="cmsg-av" style="background:${a.bg};font-size:15px;">${a.em}</div><div class="bubble ai"><div class="tdots"><span></span><span></span><span></span></div></div>`;
-  msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1024,system:a.sys,messages:histories[curAgent].map(m=>({role:m.role,content:m.content}))})
-    });
-    const d=await res.json();
-    if(!res.ok)throw new Error(d.error?.message||'Error');
-    const reply=d.content.map(c=>c.text||'').join('');
-    document.getElementById('typing')?.remove();
-    appendMsg('ai',reply);
-    histories[curAgent].push({role:'assistant',content:reply});
-  }catch(e){
-    document.getElementById('typing')?.remove();
-    appendMsg('ai','❌ '+e.message);
-  }
-  chatBusy=false;document.getElementById('send-btn').disabled=false;
-}
-
-// ===== AI COIN SCANNER =====
+// ===== SCAN =====
 const SCAN_PROMPT = `คุณคือ Rex นักวิเคราะห์คริปโตสาย trend-following ที่ใช้หลัก CDC ActionZone (EMA12/EMA26 crossover)
 ค้นหาข้อมูลตลาดคริปโต 24-48 ชม.ล่าสุด แล้วคัดเหรียญ 3 ตัวที่เข้าเงื่อนไขนี้:
 - เหรียญ mid-cap อันดับ 20-150 (ข้าม BTC ETH SOL BNB XRP ไปเลย) ที่มี volume เพิ่มผิดปกติหรือเพิ่งมีข่าว catalyst
-- เน้นตัวที่ "เพิ่งเริ่มเทรนด์ขาขึ้นใหม่" — ราคาเพิ่งกลับตัว, เพิ่งยืนเหนือ EMA ระยะสั้น, หรือเพิ่ง breakout จาก consolidation (เหมือน ZEC ตอนเริ่มวิ่งวันแรกๆ)
+- เน้นตัวที่ "เพิ่งเริ่มเทรนด์ขาขึ้นใหม่" — เพิ่งกลับตัว, เพิ่งยืนเหนือ EMA, หรือเพิ่ง breakout (เหมือน ZEC ตอนเริ่มวิ่งวันแรกๆ)
 - ห้ามเลือกตัวที่พุ่งเกิน 50% ในสัปดาห์ไปแล้ว (มาช้า = รับดอย)
 - ต้องมีสภาพคล่องจริง เทรดใน exchange ใหญ่ได้
-- ประเมินสถานะ CDC: บอกว่าตอนนี้น่าจะเป็นโซนเขียว (EMA12>EMA26 เพิ่งตัดขึ้น = น่าสนใจสุด) หรือยังรอยืนยัน
-- ตอบเป็น JSON เท่านั้น ห้ามมี markdown หรือข้อความอื่นนอก JSON
-รูปแบบ: {"summary":"ภาพรวมตลาดวันนี้ ภาษาไทย 1-2 ประโยค","coins":[{"symbol":"ชื่อเหรียญ + อันดับ market cap","price":"ราคาปัจจุบันโดยประมาณ","reason":"ทำไมน่าสนใจ + สถานะ CDC/เทรนด์ ภาษาไทย","levels":"แนวรับ / แนวต้าน / จุดตัดขาดทุน","risk":"ความเสี่ยงหลัก ภาษาไทย"}]}
-สำคัญมาก: เขียนแต่ละ field สั้นกระชับ 1-2 ประโยค ค้นเว็บแค่ 1-2 ครั้งพอ`;
+- ประเมินสถานะ CDC: โซนเขียว (EMA12>EMA26 เพิ่งตัดขึ้น = น่าสนใจสุด) หรือยังรอยืนยัน
+- ตอบเป็น JSON เท่านั้น ห้ามมี markdown
+รูปแบบ: {"summary":"ภาพรวมตลาด ไทย 1-2 ประโยค","coins":[{"symbol":"ชื่อ + อันดับ mcap","price":"ราคาโดยประมาณ","reason":"ทำไมน่าสนใจ + สถานะ CDC ภาษาไทย","levels":"แนวรับ/แนวต้าน/จุดตัดขาดทุน","risk":"ความเสี่ยงหลัก ภาษาไทย"}]}
+สำคัญ: แต่ละ field สั้น 1-2 ประโยค ค้นเว็บแค่ 1-2 ครั้งพอ`;
 
 async function scanCoins() {
   if (!apiKey) {
     document.getElementById('scan-key-hint').style.display = 'block';
-    document.getElementById('scan-summary').style.display = 'none';
-    document.getElementById('scan-cards').style.display = 'none';
-    document.getElementById('scan-error').style.display = 'none';
     return;
   }
-  document.getElementById('scan-key-hint').style.display = 'none';
-  document.getElementById('scan-error').style.display = 'none';
-  document.getElementById('scan-summary').style.display = 'none';
-  document.getElementById('scan-cards').style.display = 'none';
-  document.getElementById('scan-loading').style.display = 'block';
-  document.getElementById('scan-footer').style.display = 'none';
-  document.getElementById('scan-btn').disabled = true;
-  document.getElementById('scan-btn').textContent = '⏳ กำลังสแกน...';
+  const el = id => document.getElementById(id);
+  el('scan-key-hint').style.display = 'none';
+  el('scan-error').style.display = 'none';
+  el('scan-summary').style.display = 'none';
+  el('coin-list').innerHTML = '';
+  el('scan-loading').style.display = 'block';
+  el('scan-btn').disabled = true;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1500,
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
-        messages: [{ role: 'user', content: SCAN_PROMPT }]
+        tools: [{type:'web_search_20250305', name:'web_search', max_uses:2}],
+        messages: [{role:'user', content:SCAN_PROMPT}]
       })
     });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || 'API Error ' + res.status);
-    }
-
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || 'API ' + res.status); }
     const data = await res.json();
-    const rawText = data.content
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('');
-
-    // Parse JSON — strip any accidental markdown fences
-    const clean = rawText.replace(/```json|```/g, '').trim();
+    const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
     let parsed = null;
-    try {
-      parsed = JSON.parse(clean);
-    } catch (e1) {
-      // Try extracting JSON object from response
-      const match = clean.match(/\{[\s\S]*\}/);
-      if (match) {
-        try { parsed = JSON.parse(match[0]); } catch (e2) { parsed = null; }
-      }
-      // Last resort: repair truncated JSON (close open strings/brackets)
+    try { parsed = JSON.parse(clean); } catch(e1) {
+      const m = clean.match(/\{[\s\S]*\}/);
+      if (m) { try { parsed = JSON.parse(m[0]); } catch(e2){} }
       if (!parsed) {
-        let repair = (match ? match[0] : clean);
-        // Count and close unclosed structures
-        const quotes = (repair.match(/(?<!\\)"/g) || []).length;
-        if (quotes % 2 === 1) repair += '"';
-        const opens = (repair.match(/\{/g) || []).length - (repair.match(/\}/g) || []).length;
-        const arrs = (repair.match(/\[/g) || []).length - (repair.match(/\]/g) || []).length;
-        repair += ']'.repeat(Math.max(0, arrs)) + '}'.repeat(Math.max(0, opens));
-        try { parsed = JSON.parse(repair); } catch (e3) {
-          throw new Error('parse JSON ไม่ได้ — กดสแกนใหม่อีกครั้ง');
-        }
+        let rep = (m ? m[0] : clean);
+        const q = (rep.match(/(?<!\\)"/g) || []).length;
+        if (q % 2 === 1) rep += '"';
+        const o = (rep.match(/\{/g)||[]).length - (rep.match(/\}/g)||[]).length;
+        const a = (rep.match(/\[/g)||[]).length - (rep.match(/\]/g)||[]).length;
+        rep += ']'.repeat(Math.max(0,a)) + '}'.repeat(Math.max(0,o));
+        parsed = JSON.parse(rep);
       }
     }
-
-    // Validate structure
-    if (!parsed.coins || !Array.isArray(parsed.coins)) throw new Error('รูปแบบข้อมูลไม่ถูกต้อง — กดสแกนใหม่');
-
-    // Save to window.storage
-    const scanData = { result: parsed, time: new Date().toISOString() };
+    if (!parsed.coins || !Array.isArray(parsed.coins)) throw new Error('รูปแบบข้อมูลผิด กดใหม่');
+    const scanData = {result: parsed, time: new Date().toISOString()};
     try { await window.storage.set('is_scan_result', JSON.stringify(scanData)); } catch(e) {}
-
-    renderScanResult(parsed, new Date());
-
-  } catch (e) {
+    renderScan(parsed, new Date());
+    // mark scan task done
+    const si = tasks.findIndex(t => t.text.includes('สแกนเหรียญ') && !t.done);
+    if (si >= 0) { tasks[si].done = true; saveTasks(); renderTasks(); }
+  } catch(e) {
     document.getElementById('scan-loading').style.display = 'none';
     document.getElementById('scan-error').style.display = 'block';
-    document.getElementById('scan-error-msg').textContent = e.message || 'เกิดข้อผิดพลาด';
+    document.getElementById('scan-error-msg').textContent = e.message;
   } finally {
     document.getElementById('scan-btn').disabled = false;
-    document.getElementById('scan-btn').textContent = '🔍 สแกนตลาดวันนี้';
   }
 }
 
-function renderScanResult(parsed, dateObj) {
+function renderScan(parsed, dt) {
   document.getElementById('scan-loading').style.display = 'none';
-  document.getElementById('scan-error').style.display = 'none';
-
-  // Summary
   if (parsed.summary) {
-    document.getElementById('scan-summary').style.display = 'block';
-    document.getElementById('scan-summary').textContent = '📊 ' + parsed.summary;
+    const s = document.getElementById('scan-summary');
+    s.style.display = 'block';
+    s.textContent = '📊 ' + parsed.summary;
   }
-
-  // Coin cards
-  const list = document.getElementById('coin-list');
-  list.innerHTML = parsed.coins.map(c => `
-    <div style="background:var(--bg3);border:1px solid var(--br);border-radius:var(--r);padding:.875rem 1rem;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:32px;height:32px;border-radius:50%;background:rgba(127,119,221,.2);border:1px solid rgba(127,119,221,.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#AFA9EC;">${(c.symbol||'?').substring(0,3)}</div>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:var(--tx);">${c.symbol||'—'}</div>
-            <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--g);">${c.price||'—'}</div>
-          </div>
-        </div>
-        <div style="font-size:10px;padding:3px 10px;border-radius:20px;background:rgba(29,158,117,.15);color:var(--g);border:1px solid rgba(29,158,117,.3);">น่าติดตาม</div>
+  document.getElementById('coin-list').innerHTML = parsed.coins.map(c => `
+    <div class="coin-card">
+      <div class="coin-head">
+        <div class="coin-av">${(c.symbol||'?').substring(0,4)}</div>
+        <div><div class="coin-sym">${c.symbol||'—'}</div><div class="coin-price">${c.price||''}</div></div>
       </div>
-      <div style="font-size:12px;color:var(--tx2);margin-bottom:6px;line-height:1.6;">
-        <span style="color:var(--tx3);font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;">เหตุผล</span><br>${c.reason||'—'}
-      </div>
-      <div style="font-size:11px;color:var(--tx3);margin-bottom:6px;">
-        <span style="color:#7F77DD;">📍 ${c.levels||'—'}</span>
-      </div>
-      <div style="font-size:11px;color:var(--red);background:rgba(226,75,74,.08);border:1px solid rgba(226,75,74,.2);border-radius:var(--rs);padding:5px 10px;">
-        ⚠️ ความเสี่ยง: ${c.risk||'—'}
-      </div>
-    </div>
-  `).join('');
-
-  document.getElementById('scan-cards').style.display = 'block';
-  document.getElementById('scan-footer').style.display = 'block';
-
-  // Timestamp
-  const t = dateObj || new Date();
-  document.getElementById('scan-time').textContent = 'สแกนล่าสุด: ' + t.toLocaleDateString('th-TH') + ' ' + t.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+      <div class="coin-sec"><span class="coin-label">เหตุผล + CDC</span>${c.reason||'—'}</div>
+      <div class="coin-levels">📍 ${c.levels||'—'}</div>
+      <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
+    </div>`).join('');
+  document.getElementById('scan-time').textContent = (dt||new Date()).toLocaleDateString('th-TH') + ' ' + (dt||new Date()).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
 }
 
 async function loadScanCache() {
   try {
     const saved = await window.storage.get('is_scan_result');
     if (saved && saved.value) {
-      const data = JSON.parse(saved.value);
-      if (data.result && data.time) {
-        renderScanResult(data.result, new Date(data.time));
-      }
+      const d = JSON.parse(saved.value);
+      if (d.result) renderScan(d.result, new Date(d.time));
     }
   } catch(e) {}
 }
 
-// ===== INIT =====
-window.addEventListener('load',()=>{
-  if(apiKey){document.getElementById('key-in').value=apiKey;document.getElementById('key-ok').style.display='block';}
-  renderTasks();renderIncome();ariaDaily();novaDate();
-  if(Notification.permission==='default')Notification.requestPermission();
-  loadRex();
+// ===== REX PAGE =====
+async function loadRexPage() {
+  try {
+    const dd = window._mktData || (await (await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=usd&include_24hr_change=true')).json());
+    const bp = dd.bitcoin.usd, bc = dd.bitcoin.usd_24h_change;
+    document.getElementById('r-btc').textContent = '$' + Math.round(bp).toLocaleString();
+    const bce = document.getElementById('r-btc-c');
+    bce.textContent = (bc>=0?'+':'') + bc.toFixed(2) + '%';
+    bce.className = 'ph-chg ' + (bc>=0?'up':'dn');
+    if (dd['pax-gold'] && dd['pax-gold'].usd > 1000) {
+      const xp = dd['pax-gold'].usd, xc = dd['pax-gold'].usd_24h_change||0;
+      document.getElementById('r-xau').textContent = '$' + Math.round(xp).toLocaleString();
+      const xce = document.getElementById('r-xau-c');
+      xce.textContent = (xc>=0?'+':'') + xc.toFixed(2) + '%';
+      xce.className = 'ph-chg ' + (xc>=0?'up':'dn');
+    }
+    const rsi = Math.min(78, Math.max(24, Math.round(41 + bc*1.5)));
+    const re = document.getElementById('s-rsi');
+    re.textContent = rsi + (rsi>70?' Overbought':rsi<30?' Oversold':' Neutral');
+    re.className = 'sig-val ' + (rsi>70?'dn':rsi<30?'up':'warn');
+    const me = document.getElementById('s-mom');
+    me.textContent = bc>=0?'Bullish':'Bearish';
+    me.className = 'sig-val ' + (bc>=0?'up':'dn');
+    const se = document.getElementById('s-sig');
+    if (bc>=-1 && rsi<35) { se.textContent='BUY (Oversold)'; se.className='sig-val up'; }
+    else if (bc<-3) { se.textContent='CAUTION'; se.className='sig-val dn'; }
+    else if (bc<-1) { se.textContent='SELL'; se.className='sig-val dn'; }
+    else { se.textContent='HOLD'; se.className='sig-val warn'; }
+    // chart
+    const hr = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily');
+    if (hr.ok) {
+      const hd = await hr.json();
+      const prices = hd.prices;
+      const ctx = document.getElementById('btc-chart').getContext('2d');
+      if (btcChart) btcChart.destroy();
+      btcChart = new Chart(ctx, {
+        type:'line',
+        data:{labels:prices.map(p=>{const t=new Date(p[0]);return (t.getMonth()+1)+'/'+t.getDate();}),datasets:[{data:prices.map(p=>p[1]),borderColor:bc>=0?'#1D9E75':'#E24B4A',borderWidth:2,pointRadius:0,tension:.3}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{ticks:{font:{size:10},color:'#566179',maxTicksLimit:6},grid:{display:false}},
+            y:{ticks:{font:{size:10,family:'JetBrains Mono'},color:'#566179',callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'rgba(255,255,255,.04)'}}}}
+      });
+    }
+    window._rexLoaded = true;
+  } catch(e) {}
+}
+
+// ===== CHAT =====
+const AGENTS = {
+  aria:{name:'Aria',em:'📋',sys:'คุณคือ Aria ผู้ช่วยของคุณออยล์ที่ทำ TikTok Affiliate + เทรดตาม CDC ActionZone ตอบสั้นกระชับภาษาไทย ลงท้าย "ครับคุณออยล์"',sugg:['สรุปวันนี้','ช่วยจัดลำดับงาน']},
+  rex:{name:'Rex',em:'📊',sys:'คุณคือ Rex นักวิเคราะห์ CDC ActionZone ของคุณออยล์ ตอบสั้น เน้นตัวเลข Entry/Stop ชัด บอกเสมอว่าไม่ใช่คำแนะนำลงทุน ภาษาไทย',sugg:['LIT ตอนนี้ควรทำไง','BTC วันนี้']},
+  nova:{name:'Nova',em:'🎬',sys:'คุณคือ Nova TikTok strategist ของคุณออยล์ (@kknoil, 1293 followers, สายอาหาร/ไลฟ์สไตล์) เชี่ยวชาญ script ปักตะกร้า ตอบสั้น ภาษาไทย',sugg:['script คลิปวันนี้','hashtag แนะนำ']}
+};
+function selectAgent(id, btn) {
+  curAgent = id;
+  document.querySelectorAll('.ab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
   renderChat();
-  loadScanCache();
-  setInterval(ariaDaily,300000);
+}
+function renderChat() {
+  const a = AGENTS[curAgent];
+  const h = histories[curAgent];
+  const box = document.getElementById('chat-msgs');
+  box.innerHTML = '';
+  if (!h.length) {
+    box.innerHTML = `<div class="welcome">${a.em} ${a.name}<div class="sugg-wrap">${a.sugg.map(s=>`<button class="sugg" onclick="quickChat('${s}')">${s}</button>`).join('')}</div></div>`;
+  } else {
+    h.forEach(m => appendMsg(m.role==='user'?'me':'ai', m.content));
+  }
+}
+function quickChat(t) { document.getElementById('chat-ta').value = t; chatSend(); }
+function chatKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); chatSend(); } }
+function appendMsg(type, text) {
+  const box = document.getElementById('chat-msgs');
+  const w = box.querySelector('.welcome'); if (w) w.remove();
+  const a = AGENTS[curAgent];
+  const div = document.createElement('div');
+  div.className = 'cmsg' + (type==='me'?' me':'');
+  const txt = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/```([\s\S]*?)```/g,'<pre>$1</pre>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  div.innerHTML = (type==='me'?'<div class="cav">O</div>':`<div class="cav">${a.em}</div>`) + `<div class="bubble ${type==='me'?'me':'ai'}">${txt}</div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+async function chatSend() {
+  if (chatBusy) return;
+  const ta = document.getElementById('chat-ta');
+  const text = ta.value.trim();
+  if (!text) return;
+  if (!apiKey) { alert('ใส่ API Key ที่แท็บ ⚙️ ก่อนครับ'); showPage('setup'); return; }
+  ta.value=''; ta.style.height='auto';
+  appendMsg('me', text);
+  histories[curAgent].push({role:'user', content:text});
+  chatBusy = true;
+  document.getElementById('send-btn').disabled = true;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:800,system:AGENTS[curAgent].sys,messages:histories[curAgent]})
+    });
+    const dd = await res.json();
+    if (!res.ok) throw new Error(dd.error?.message||'Error');
+    const reply = dd.content.map(c=>c.text||'').join('');
+    appendMsg('ai', reply);
+    histories[curAgent].push({role:'assistant', content:reply});
+  } catch(e) { appendMsg('ai', '❌ ' + e.message); }
+  chatBusy = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+// ===== INIT =====
+window.addEventListener('load', () => {
+  if (apiKey) { document.getElementById('key-in').value = apiKey; document.getElementById('key-ok').style.display='block'; }
+  renderTasks(); renderIncome(); loadTradePlan(); loadScanCache();
 });
 </script>
 </body>
