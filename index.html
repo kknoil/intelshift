@@ -392,6 +392,31 @@ function updatePosition() {
 }
 
 // ===== TASKS =====
+// Daily tasks reset every new day; custom tasks persist until deleted
+const DAILY_TASKS = [
+  '🎬 โพสต์คลิป TikTok (17:00-20:00)',
+  '🔍 สแกนเหรียญประจำวัน',
+  '📊 เช็คโพซิชั่น + CDC ใน TradingView'
+];
+
+function todayKey() {
+  const n = new Date();
+  return n.getFullYear() + '-' + (n.getMonth()+1) + '-' + n.getDate();
+}
+
+function resetDailyIfNewDay() {
+  const last = localStorage.getItem('is_lastday');
+  const today = todayKey();
+  if (last !== today) {
+    // ข้ามวัน: ลบทุก task ที่ติ๊กเสร็จแล้ว + ลบ daily เก่าทั้งหมด
+    tasks = tasks.filter(t => !t.done && !t.daily);
+    // เติม daily ชุดใหม่ไว้บนสุด
+    tasks = DAILY_TASKS.map(text => ({text, done: false, daily: true})).concat(tasks);
+    saveTasks();
+    localStorage.setItem('is_lastday', today);
+  }
+}
+
 function saveTasks() { localStorage.setItem('is_tasks', JSON.stringify(tasks)); }
 function renderTasks() {
   const list = document.getElementById('task-list');
@@ -404,7 +429,7 @@ function renderTasks() {
   list.innerHTML = tasks.map((t, i) => `
     <div class="task-item">
       <button class="task-cb${t.done ? ' done' : ''}" onclick="toggleTask(${i})">${t.done ? '✓' : ''}</button>
-      <div class="task-text${t.done ? ' done' : ''}">${t.text}</div>
+      <div class="task-text${t.done ? ' done' : ''}">${t.text}${t.daily ? ' <span style="font-size:10px;color:var(--tx3);">· ประจำวัน</span>' : ''}</div>
       <button class="task-del" onclick="delTask(${i})">×</button>
     </div>`).join('');
 }
@@ -418,16 +443,16 @@ function addTask(txt) {
 function toggleTask(i) { tasks[i].done = !tasks[i].done; saveTasks(); renderTasks(); }
 function delTask(i) { tasks.splice(i, 1); saveTasks(); renderTasks(); }
 
-// Seed default tasks on first run
-if (!localStorage.getItem('is_seeded')) {
-  tasks = [
-    {text: '🎬 โพสต์คลิป TikTok (17:00-20:00)', done: false},
-    {text: '🔍 สแกนเหรียญประจำวัน', done: false},
-    {text: '📊 เช็ค CDC LIT ใน TradingView', done: false}
-  ];
+// Migration: remove old-version seeded tasks (no daily flag) that duplicate daily tasks
+if (!localStorage.getItem('is_migrated_v2')) {
+  tasks = tasks.filter(t => !(t.text.includes('โพสต์คลิป TikTok') || t.text.includes('สแกนเหรียญ') || t.text.includes('เช็ค CDC')));
   saveTasks();
-  localStorage.setItem('is_seeded', '1');
+  localStorage.setItem('is_migrated_v2', '1');
+  localStorage.removeItem('is_lastday'); // force daily seed
 }
+
+// Run daily reset check on load
+resetDailyIfNewDay();
 
 // ===== TRADE PLAN =====
 let tpTimer = null;
