@@ -253,13 +253,10 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
   <!-- ========== PLAN ========== -->
   <div id="page-plan" class="page">
     <div class="card">
-      <div class="card-title"><span>📌 Trade Plan</span><span class="tp-saved" id="tp-saved">✓ บันทึกแล้ว</span></div>
-      <textarea class="tp-body" id="tp-body" placeholder="LIT — Entry Plan
-├ ไม้ 1: 25% @ $2.50 ✓
-├ ไม้ 2: เติมที่ $2.00-2.10 (CDC ยังเขียว)
-├ Stop: ปิด Daily < $1.95 → ออกหมด
-└ ห้าม: เติมไล่ราคาเหนือ $2.50" oninput="saveTradePlan()"></textarea>
-      <div style="font-size:11px;color:var(--tx3);margin-top:8px;">บันทึกอัตโนมัติ · บรรทัดแรกจะโชว์เป็นสถานะโพซิชั่นหน้า Today</div>
+      <div class="card-title"><span>📌 Trade Plans</span><span class="tp-saved" id="tp-saved">✓ บันทึกแล้ว</span></div>
+      <div id="plan-list"></div>
+      <button class="btn btn-full" onclick="addPlan()" style="margin-top:8px;">+ เพิ่มแผนใหม่</button>
+      <div style="font-size:11px;color:var(--tx3);margin-top:8px;">บันทึกอัตโนมัติ · ติ๊ก ✓ ที่หัวการ์ดเพื่อลบแผนที่จบแล้ว · บรรทัดแรกของทุกแผนโชว์หน้า Today</div>
     </div>
     <div class="card">
       <div class="card-title"><span>💰 รายได้เสริมเดือนนี้</span></div>
@@ -371,23 +368,27 @@ function setMkt(pid, cid, price, chg) {
   el.className = 'mkt-chg ' + (chg >= 0 ? 'up' : 'dn');
 }
 loadMarket();
-setInterval(loadMarket, 120000);
+setInterval(loadMarket, 60000);
 
-// ===== POSITION STATUS (from trade plan first line) =====
+// ===== POSITION STATUS (from all plan cards' first lines) =====
 function updatePosition() {
-  const plan = localStorage.getItem('is_tradeplan2') || '';
+  const plans = getPlans();
   const light = document.getElementById('pos-light');
   const main = document.getElementById('pos-main');
   const sub = document.getElementById('pos-sub');
-  if (!plan.trim()) {
+  const active = plans.filter(p => p.text.trim());
+  if (!active.length) {
     light.className = 'pos-light ok';
     main.textContent = 'ยังไม่มีโพซิชั่น';
     sub.textContent = 'เขียนแผนที่แท็บ Plan แล้วสถานะจะโชว์ที่นี่';
     return;
   }
-  const firstLine = plan.split('\n')[0].trim();
-  main.textContent = firstLine;
-  sub.textContent = 'เช็คราคาจริง + alert ใน Bybit · แตะ "แก้แผน" เพื่อดูแผนเต็ม';
+  main.textContent = active[0].text.split('\n')[0].trim();
+  if (active.length > 1) {
+    sub.innerHTML = active.slice(1).map(p => p.text.split('\n')[0].trim()).join('<br>') + '<br><span style="color:var(--tx3);">เช็คราคา + alert ใน Bybit</span>';
+  } else {
+    sub.textContent = 'เช็คราคาจริง + alert ใน Bybit · แตะ "แก้แผน" เพื่อดูแผนเต็ม';
+  }
   light.className = 'pos-light ok';
 }
 
@@ -454,21 +455,66 @@ if (!localStorage.getItem('is_migrated_v2')) {
 // Run daily reset check on load
 resetDailyIfNewDay();
 
-// ===== TRADE PLAN =====
-let tpTimer = null;
-function saveTradePlan() {
-  clearTimeout(tpTimer);
-  tpTimer = setTimeout(() => {
-    localStorage.setItem('is_tradeplan2', document.getElementById('tp-body').value);
+// ===== TRADE PLANS (multi-card) =====
+function getPlans() {
+  return JSON.parse(localStorage.getItem('is_plans') || '[]');
+}
+function setPlans(plans) {
+  localStorage.setItem('is_plans', JSON.stringify(plans));
+}
+let planTimer = null;
+function renderPlans() {
+  const plans = getPlans();
+  const list = document.getElementById('plan-list');
+  if (!plans.length) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--tx3);padding:8px 0;">ยังไม่มีแผน กด + เพิ่มแผนใหม่</div>';
+    return;
+  }
+  list.innerHTML = plans.map((p, i) => `
+    <div style="background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:10px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:600;color:#AFA9EC;">แผน ${i+1}</span>
+        <button onclick="donePlan(${i})" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--br2);border-radius:20px;padding:5px 12px;color:var(--tx2);font-size:12px;cursor:pointer;font-family:inherit;">✓ จบแผนนี้ (ลบ)</button>
+      </div>
+      <textarea class="tp-body" style="min-height:130px;" oninput="savePlan(${i}, this.value)" placeholder="SYMBOL — Entry Plan&#10;├ เข้า: ...&#10;├ SL: ...&#10;└ TP: ...">${p.text.replace(/</g,'&lt;')}</textarea>
+    </div>`).join('');
+}
+function addPlan() {
+  const plans = getPlans();
+  plans.push({text: '', created: Date.now()});
+  setPlans(plans);
+  renderPlans();
+}
+function savePlan(i, val) {
+  clearTimeout(planTimer);
+  planTimer = setTimeout(() => {
+    const plans = getPlans();
+    if (plans[i]) { plans[i].text = val; setPlans(plans); }
     const s = document.getElementById('tp-saved');
     s.style.display = 'inline';
     setTimeout(() => s.style.display = 'none', 1500);
     updatePosition();
   }, 400);
 }
+function donePlan(i) {
+  const plans = getPlans();
+  const name = (plans[i]?.text || '').split('\n')[0].trim() || 'แผน ' + (i+1);
+  if (!confirm('จบแผน "' + name + '" และลบออก?\n\nอย่าลืมจดกำไร/ขาดทุนลง Income ด้วยนะครับ')) return;
+  plans.splice(i, 1);
+  setPlans(plans);
+  renderPlans();
+  updatePosition();
+}
 function loadTradePlan() {
-  const saved = localStorage.getItem('is_tradeplan2') || localStorage.getItem('is_tradeplan') || '';
-  if (saved) document.getElementById('tp-body').value = saved;
+  // migrate old single plan → first card
+  const old = localStorage.getItem('is_tradeplan2') || localStorage.getItem('is_tradeplan');
+  if (old && old.trim() && !localStorage.getItem('is_plans_migrated')) {
+    const plans = getPlans();
+    plans.unshift({text: old, created: Date.now()});
+    setPlans(plans);
+    localStorage.setItem('is_plans_migrated', '1');
+  }
+  renderPlans();
   updatePosition();
 }
 
@@ -578,17 +624,59 @@ function renderScan(parsed, dt) {
     s.style.display = 'block';
     s.textContent = '📊 ' + parsed.summary;
   }
-  document.getElementById('coin-list').innerHTML = parsed.coins.map(c => `
+  document.getElementById('coin-list').innerHTML = parsed.coins.map((c, i) => `
     <div class="coin-card">
       <div class="coin-head">
         <div class="coin-av">${(c.symbol||'?').substring(0,4)}</div>
-        <div><div class="coin-sym">${c.symbol||'—'}</div><div class="coin-price">${c.price||''}</div></div>
+        <div style="flex:1;"><div class="coin-sym">${c.symbol||'—'}</div><div class="coin-price">สแกน: ${c.price||''}</div>
+        <div class="coin-price" id="live-${i}" style="color:var(--amb);">🔄 กำลังดึงราคาสด...</div></div>
       </div>
       <div class="coin-sec"><span class="coin-label">เหตุผล + CDC</span>${c.reason||'—'}</div>
       <div class="coin-levels">📍 ${c.levels||'—'}</div>
       <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
     </div>`).join('');
   document.getElementById('scan-time').textContent = (dt||new Date()).toLocaleDateString('th-TH') + ' ' + (dt||new Date()).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  fetchLivePrices(parsed.coins);
+}
+
+// ดึงราคาสดจาก CoinGecko เทียบกับราคาตอนสแกน
+async function fetchLivePrices(coins) {
+  for (let i = 0; i < coins.length; i++) {
+    const el = document.getElementById('live-' + i);
+    if (!el) continue;
+    try {
+      // แยก ticker จาก symbol เช่น "DEXE — อันดับ..." → "DEXE"
+      const ticker = (coins[i].symbol || '').split(/[\s—(]/)[0].trim();
+      if (!ticker) { el.textContent = ''; continue; }
+      // หา coin id จาก CoinGecko search
+      const sr = await fetch('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(ticker));
+      if (!sr.ok) throw new Error();
+      const sd = await sr.json();
+      const hit = (sd.coins || []).find(c => c.symbol.toUpperCase() === ticker.toUpperCase()) || (sd.coins || [])[0];
+      if (!hit) { el.textContent = '⚠️ หาราคาสดไม่เจอ เช็คใน Bybit'; continue; }
+      const pr = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=' + hit.id + '&vs_currencies=usd&include_24hr_change=true');
+      if (!pr.ok) throw new Error();
+      const pd = await pr.json();
+      const live = pd[hit.id];
+      if (!live) { el.textContent = '⚠️ หาราคาสดไม่เจอ'; continue; }
+      const price = live.usd;
+      const chg = live.usd_24h_change || 0;
+      // เทียบกับราคาตอนสแกน (ดึงตัวเลขแรกจาก string)
+      const scanNum = parseFloat((coins[i].price || '').replace(/[^0-9.]/g, ''));
+      let diffTxt = '';
+      if (scanNum && scanNum > 0) {
+        const diff = ((price - scanNum) / scanNum) * 100;
+        if (Math.abs(diff) > 3) {
+          diffTxt = ` <span style="color:${diff > 0 ? 'var(--red)' : 'var(--gd)'};font-weight:600;">(${diff > 0 ? '+' : ''}${diff.toFixed(1)}% จากตอนสแกน${diff > 5 ? ' ⚠️ อย่าไล่!' : ''})</span>`;
+        }
+      }
+      el.innerHTML = `<span style="color:var(--gd);">สด: $${price < 1 ? price.toFixed(4) : price.toLocaleString('en-US',{maximumFractionDigits:2})}</span> <span style="color:${chg >= 0 ? 'var(--gd)' : 'var(--red)'};">${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%/24h</span>${diffTxt}`;
+      // เว้นจังหวะกัน rate limit
+      await new Promise(r => setTimeout(r, 600));
+    } catch(e) {
+      el.textContent = '⚠️ ดึงราคาสดไม่ได้ เช็คใน Bybit';
+    }
+  }
 }
 
 async function loadScanCache() {
