@@ -633,6 +633,20 @@ async function scanCoins() {
 
     if (!candidates.length) throw new Error('วันนี้ไม่มีเหรียญเข้าเงื่อนไข ลองพรุ่งนี้ครับ');
 
+    // ทองก่อนเลย (กัน rate limit ตอนท้าย): คำนวณ CDC จริงจากราคาปิด 60 วัน
+    setLoad('วิเคราะห์ทองคำก่อน...');
+    let goldCloses = null, goldCur = null, goldCdc = null;
+    try {
+      const ghr = await fetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=60&interval=daily');
+      if (ghr.ok) {
+        const ghd = await ghr.json();
+        goldCloses = ghd.prices.map(p => p[1]);
+        goldCur = +goldCloses[goldCloses.length-1].toFixed(1);
+        goldCdc = cdcStatus(goldCloses);
+      }
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 1300));
+
     // STEP 2 (ฟรี): ดึงกราฟ 60 วันทีละเหรียญ → คำนวณ CDC จริงในเครื่อง
     const analyzed = [];
     for (let i = 0; i < candidates.length; i++) {
@@ -645,6 +659,8 @@ async function scanCoins() {
           const closes = hd.prices.map(p => p[1]);
           const cdc = cdcStatus(closes);
           if (cdc) {
+            window._cgMap = window._cgMap || {};
+            window._cgMap[(c.symbol||'').toUpperCase()] = { id: c.id, price: closes[closes.length-1] };
             analyzed.push({
               symbol: (c.symbol||'').toUpperCase(), name: c.name, rank: c.market_cap_rank,
               price: c.current_price,
@@ -667,18 +683,6 @@ async function scanCoins() {
       .filter(c => c.cdc_status in RANKED)
       .sort((a, b) => RANKED[a.cdc_status] - RANKED[b.cdc_status] || b.vol_mcap - a.vol_mcap)
       .slice(0, 5);
-
-    setLoad('วิเคราะห์ทองคำ...');
-    let goldCloses = null, goldCur = null, goldCdc = null;
-    try {
-      const ghr = await fetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=60&interval=daily');
-      if (ghr.ok) {
-        const ghd = await ghr.json();
-        goldCloses = ghd.prices.map(p => p[1]);
-        goldCur = +goldCloses[goldCloses.length-1].toFixed(1);
-        goldCdc = cdcStatus(goldCloses);
-      }
-    } catch(e) {}
 
     if (!qualified.length && !goldCdc) throw new Error('วันนี้ไม่มีเหรียญที่ CDC เขียวสดหรือใกล้ตัดขึ้นเลยครับ — ตลาดยังไม่ให้สัญญาณ ถือเงินสดรอดีที่สุด');
 
@@ -770,53 +774,64 @@ function renderScan(parsed, dt) {
   fetchLivePrices(parsed.coins);
 }
 
-// ดึงราคาสด แล้วเทียบกับโซนเข้า → บอก action ชัดๆ
+// ดึงราคาสด แล้วเทียบกับโซนเข้า → บอก action ชัดๆ (ใช้ id ที่ cache ไว้ กัน rate limit)
 async function fetchLivePrices(coins) {
   for (let i = 0; i < coins.length; i++) {
     const el = document.getElementById('live-' + i);
     const vd = document.getElementById('verdict-' + i);
     if (!el) continue;
+    const ticker = (coins[i].symbol || '').split(/[\s—(]/)[0].trim().toUpperCase();
+    const cached = (window._cgMap || {})[ticker];
+    let price = null, chg = null;
     try {
-      const ticker = (coins[i].symbol || '').split(/[\s—(]/)[0].trim();
-      if (!ticker) { el.textContent = ''; continue; }
-      const sr = await fetch('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(ticker));
-      if (!sr.ok) throw new Error();
-      const sd = await sr.json();
-      const hit = (sd.coins || []).find(c => c.symbol.toUpperCase() === ticker.toUpperCase()) || (sd.coins || [])[0];
-      if (!hit) { el.innerHTML = '<span style="color:var(--tx3);">เช็คราคาใน Bybit</span>'; continue; }
-      const pr = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=' + hit.id + '&vs_currencies=usd&include_24hr_change=true');
-      if (!pr.ok) throw new Error();
-      const pd = await pr.json();
-      const live = pd[hit.id];
-      if (!live) { el.innerHTML = '<span style="color:var(--tx3);">เช็คราคาใน Bybit</span>'; continue; }
-      const price = live.usd;
-      const chg = live.usd_24h_change || 0;
-      const fmtP = price < 1 ? '$' + price.toFixed(4) : '$' + price.toLocaleString('en-US',{maximumFractionDigits:2});
-      el.innerHTML = `<span style="color:var(--tx);font-weight:700;font-size:15px;">${fmtP}</span> <span style="color:${chg >= 0 ? 'var(--gd)' : 'var(--red)'};">${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%</span>`;
-
-      // ===== ACTION VERDICT: ราคาปัจจุบัน vs โซนเข้า =====
-      const eLow = Number(coins[i].entry_low), eHigh = Number(coins[i].entry_high), sl = Number(coins[i].sl), tp = Number(coins[i].tp1);
-      if (vd && eLow && eHigh && sl) {
-        let html = '';
-        if (price <= sl) {
-          html = `<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">❌ ราคาต่ำกว่า SL แล้ว — setup เสีย ไม่เข้า</div>`;
-        } else if (price >= eLow && price <= eHigh) {
-          html = `<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้าพอดี — เช็ค CDC ใน TradingView แล้วเข้าได้ 25% + ตั้ง SL ทันที</div>`;
-        } else if (price < eLow) {
-          const gap = ((eLow - price) / price * 100).toFixed(1);
-          html = `<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ราคาต่ำกว่าโซนเข้า ${gap}% — แนวโน้มอาจอ่อนแรง รอเด้งกลับเข้าโซน + CDC เขียวก่อน</div>`;
-        } else if (tp && price >= tp) {
-          html = `<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🚫 ราคาถึง TP แล้ว — รถออกไปแล้ว ห้ามไล่! รอ setup ใหม่</div>`;
-        } else {
-          const over = ((price - eHigh) / eHigh * 100).toFixed(1);
-          html = `<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ ราคาเลยโซนเข้าไป +${over}% — อย่าไล่ ตั้ง alert ที่ ${eHigh < 1 ? '$'+eHigh.toFixed(4) : '$'+eHigh.toLocaleString()} รอย่อกลับ</div>`;
+      let id = cached ? cached.id : null;
+      if (!id) {
+        const sr = await fetch('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(ticker));
+        if (sr.ok) {
+          const sd = await sr.json();
+          const hit = (sd.coins || []).find(c => c.symbol.toUpperCase() === ticker) || (sd.coins || [])[0];
+          if (hit) id = hit.id;
         }
-        vd.innerHTML = html;
+        await new Promise(r => setTimeout(r, 800));
       }
-      await new Promise(r => setTimeout(r, 600));
-    } catch(e) {
-      el.innerHTML = '<span style="color:var(--tx3);">เช็คราคาใน Bybit</span>';
+      if (id) {
+        const pr = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=' + id + '&vs_currencies=usd&include_24hr_change=true');
+        if (pr.ok) {
+          const pd = await pr.json();
+          if (pd[id]) { price = pd[id].usd; chg = pd[id].usd_24h_change || 0; }
+        }
+      }
+    } catch(e) {}
+    // fallback: ใช้ราคาจากตอนสแกน (สดอยู่แล้ว เพิ่งดึงเมื่อครู่)
+    if (price == null && cached) { price = cached.price; chg = null; }
+    if (price == null) {
+      // ดึงจากตัวเลขที่ AI ให้มา
+      const p = parseFloat(String(coins[i].price||'').replace(/[^0-9.]/g,''));
+      if (p > 0) price = p;
     }
+    if (price == null) { el.innerHTML = '<span style="color:var(--tx3);">เช็คราคาใน Bybit</span>'; continue; }
+    const fmtP = price < 1 ? '$' + price.toFixed(4) : '$' + price.toLocaleString('en-US',{maximumFractionDigits:2});
+    el.innerHTML = '<span style="color:var(--tx);font-weight:700;font-size:15px;">' + fmtP + '</span>' + (chg != null ? ' <span style="color:' + (chg >= 0 ? 'var(--gd)' : 'var(--red)') + ';">' + (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%</span>' : '');
+
+    const eLow = Number(coins[i].entry_low), eHigh = Number(coins[i].entry_high), sl = Number(coins[i].sl), tp = Number(coins[i].tp1);
+    if (vd && eLow && eHigh && sl) {
+      let html = '';
+      if (price <= sl) {
+        html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">❌ ราคาต่ำกว่า SL แล้ว — setup เสีย ไม่เข้า</div>';
+      } else if (price >= eLow && price <= eHigh) {
+        html = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้าพอดี — เช็ค CDC ใน TradingView แล้วเข้าได้ 25% + ตั้ง SL ทันที</div>';
+      } else if (price < eLow) {
+        const gap = ((eLow - price) / price * 100).toFixed(1);
+        html = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ราคาต่ำกว่าโซนเข้า ' + gap + '% — รอเด้งกลับเข้าโซน + CDC เขียวก่อน</div>';
+      } else if (tp && price >= tp) {
+        html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🚫 ราคาถึง TP แล้ว — รถออกไปแล้ว ห้ามไล่! รอ setup ใหม่</div>';
+      } else {
+        const over = ((price - eHigh) / eHigh * 100).toFixed(1);
+        html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ ราคาเลยโซนเข้าไป +' + over + '% — อย่าไล่ รอย่อกลับเข้าโซนก่อน</div>';
+      }
+      vd.innerHTML = html;
+    }
+    await new Promise(r => setTimeout(r, 700));
   }
 }
 
