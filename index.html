@@ -209,6 +209,24 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
       </div>
     </div>
 
+    <!-- GOLD -->
+    <div class="card" style="border-color:rgba(239,159,39,.35);">
+      <div class="card-title"><span style="color:var(--amb);">🥇 ทองคำวันนี้ (XAU)</span><span style="font-size:10px;color:var(--tx3);" id="gold-time"></span></div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px;">
+        <span style="font-size:26px;font-weight:700;font-family:'JetBrains Mono',monospace;" id="gold-price">—</span>
+        <span style="font-size:13px;font-family:'JetBrains Mono',monospace;" id="gold-chg">—</span>
+      </div>
+      <div id="gold-verdict"></div>
+      <div id="gold-result" style="display:none;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;font-family:'JetBrains Mono',monospace;" id="gold-chips"></div>
+        <div class="coin-sec" id="gold-reason"></div>
+        <div class="coin-risk" id="gold-risk" style="margin-bottom:8px;"></div>
+      </div>
+      <div class="scan-loading" id="gold-loading"><div class="dots"><span></span><span></span><span></span></div><div style="margin-top:8px;">Rex กำลังวิเคราะห์ทอง...</div></div>
+      <div class="scan-error" id="gold-error">❌ <span id="gold-error-msg"></span> — <button onclick="analyzeGold()">ลองใหม่</button></div>
+      <div style="font-size:11px;color:var(--tx3);">อัปเดตพร้อมปุ่มสแกนด้านล่าง — กดครั้งเดียวได้ทั้งทอง + เหรียญ</div>
+    </div>
+
     <!-- SCAN -->
     <div class="card">
       <div class="card-title"><span style="color:#AFA9EC;">🔍 AI สแกนเหรียญ (CDC Style)</span><span style="font-size:10px;color:var(--tx3);" id="scan-time"></span></div>
@@ -217,8 +235,8 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
       <div class="scan-loading" id="scan-loading"><div class="dots"><span></span><span></span><span></span></div><div style="margin-top:8px;">Rex กำลังสแกนตลาด...</div></div>
       <div class="scan-error" id="scan-error">❌ <span id="scan-error-msg"></span> — <button onclick="scanCoins()">สแกนใหม่</button></div>
       <div id="coin-list"></div>
-      <button class="btn btn-purple btn-full" id="scan-btn" onclick="scanCoins()">🔍 สแกนตลาดวันนี้ (~3.5฿)</button>
-      <div class="scan-note" style="margin-top:10px;">ข้อมูลโดยประมาณจากการค้นเว็บ ไม่ใช่คำแนะนำการลงทุน เช็กราคาจริงบน Bybit และรอ CDC ยืนยันก่อนเข้าเสมอ</div>
+      <button class="btn btn-purple btn-full" id="scan-btn" onclick="scanCoins()">🔍 สแกนทอง + เหรียญวันนี้ (~1฿)</button>
+      <div class="scan-note" style="margin-top:10px;">ข้อมูลสดจาก CoinGecko + AI วิเคราะห์ ไม่ใช่คำแนะนำการลงทุน เช็กราคาจริงบน Bybit และรอ CDC ยืนยันก่อนเข้าเสมอ</div>
     </div>
 
   </div>
@@ -547,17 +565,40 @@ function saveKey() {
   document.getElementById('scan-key-hint').style.display = 'none';
 }
 
-// ===== SCAN =====
-const SCAN_PROMPT = `คุณคือ Rex นักวิเคราะห์คริปโตสาย trend-following ที่ใช้หลัก CDC ActionZone (EMA12/EMA26 crossover)
-ค้นหาข้อมูลตลาดคริปโต 24-48 ชม.ล่าสุด แล้วคัดเหรียญ 3 ตัวที่เข้าเงื่อนไขนี้:
-- เหรียญ mid-cap อันดับ 20-150 (ข้าม BTC ETH SOL BNB XRP ไปเลย) ที่มี volume เพิ่มผิดปกติหรือเพิ่งมีข่าว catalyst
-- เน้นตัวที่ "เพิ่งเริ่มเทรนด์ขาขึ้นใหม่" — เพิ่งกลับตัว, เพิ่งยืนเหนือ EMA, หรือเพิ่ง breakout (เหมือน ZEC ตอนเริ่มวิ่งวันแรกๆ)
-- ห้ามเลือกตัวที่พุ่งเกิน 50% ในสัปดาห์ไปแล้ว (มาช้า = รับดอย)
-- ต้องมีสภาพคล่องจริง เทรดใน exchange ใหญ่ได้
-- ประเมินสถานะ CDC: โซนเขียว (EMA12>EMA26 เพิ่งตัดขึ้น = น่าสนใจสุด) หรือยังรอยืนยัน
-- ตอบเป็น JSON เท่านั้น ห้ามมี markdown
-รูปแบบ: {"summary":"ภาพรวมตลาด ไทย 1-2 ประโยค","coins":[{"symbol":"ชื่อ + อันดับ mcap","price":"ราคาโดยประมาณ","reason":"ทำไมน่าสนใจ + สถานะ CDC ภาษาไทย","levels":"แนวรับ/แนวต้าน/จุดตัดขาดทุน","risk":"ความเสี่ยงหลัก ภาษาไทย"}]}
-สำคัญ: แต่ละ field สั้น 1-2 ประโยค ค้นเว็บแค่ 1-2 ครั้งพอ`;
+// ===== SCAN (CDC จริง: คำนวณ EMA12/26 ในเครื่อง ฟรี → ส่งเฉพาะตัวที่ผ่านให้ AI ~1฿) =====
+
+// คำนวณ EMA แบบเดียวกับ TradingView
+function calcEMA(values, period) {
+  const k = 2 / (period + 1);
+  let e = values.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  const out = new Array(period - 1).fill(null);
+  out.push(e);
+  for (let i = period; i < values.length; i++) { e = values[i] * k + e * (1 - k); out.push(e); }
+  return out;
+}
+
+// สถานะ CDC จากราคาปิดรายวัน
+function cdcStatus(closes) {
+  if (!closes || closes.length < 30) return null;
+  const e12 = calcEMA(closes, 12);
+  const e26 = calcEMA(closes, 26);
+  const n = closes.length - 1;
+  const green = e12[n] > e26[n];
+  let cross = -1;
+  for (let i = n; i > 26; i--) {
+    const gNow = e12[i] > e26[i], gPrev = e12[i-1] > e26[i-1];
+    if (gNow !== gPrev) { cross = i; break; }
+  }
+  const barsSince = cross === -1 ? 999 : (n - cross);
+  const gap = ((e12[n] - e26[n]) / e26[n]) * 100;
+  let status;
+  if (green && barsSince <= 3) status = 'FRESH_GREEN';
+  else if (green && barsSince <= 8) status = 'GREEN';
+  else if (green) status = 'OLD_GREEN';
+  else if (!green && gap > -1 && e12[n] > e12[n-2]) status = 'NEAR_CROSS';
+  else status = 'RED';
+  return { status, barsSince: barsSince === 999 ? null : barsSince, ema12: +e12[n].toFixed(6), ema26: +e26[n].toFixed(6), gap: +gap.toFixed(2) };
+}
 
 async function scanCoins() {
   if (!apiKey) {
@@ -565,22 +606,101 @@ async function scanCoins() {
     return;
   }
   const el = id => document.getElementById(id);
+  const setLoad = t => { el('scan-loading').innerHTML = '<div class="dots"><span></span><span></span><span></span></div><div style="margin-top:8px;">' + t + '</div>'; };
   el('scan-key-hint').style.display = 'none';
   el('scan-error').style.display = 'none';
   el('scan-summary').style.display = 'none';
   el('coin-list').innerHTML = '';
   el('scan-loading').style.display = 'block';
+  setLoad('ดึงข้อมูลตลาดสด...');
   el('scan-btn').disabled = true;
 
   try {
+    // STEP 1 (ฟรี): เหรียญอันดับ 20-150 กรอง momentum + volume
+    const mr = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=150&page=1&price_change_percentage=24h%2C7d');
+    if (!mr.ok) throw new Error('ดึงข้อมูลตลาดไม่ได้ ลองใหม่อีกครั้ง');
+    const all = await mr.json();
+    const SKIP = ['usdt','usdc','dai','busd','tusd','usde','fdusd','wbtc','weth','wsteth','steth','cbbtc','reth','usds','pyusd','usdd','usdt0','bsc-usd'];
+    const candidates = all
+      .filter(c => (c.market_cap_rank || 999) >= 20)
+      .filter(c => !SKIP.includes((c.symbol||'').toLowerCase()))
+      .filter(c => {
+        const d7 = c.price_change_percentage_7d_in_currency || 0;
+        return d7 > -10 && d7 < 50;
+      })
+      .sort((a, b) => (b.total_volume / b.market_cap) - (a.total_volume / a.market_cap))
+      .slice(0, 10);
+
+    if (!candidates.length) throw new Error('วันนี้ไม่มีเหรียญเข้าเงื่อนไข ลองพรุ่งนี้ครับ');
+
+    // STEP 2 (ฟรี): ดึงกราฟ 60 วันทีละเหรียญ → คำนวณ CDC จริงในเครื่อง
+    const analyzed = [];
+    for (let i = 0; i < candidates.length; i++) {
+      const c = candidates[i];
+      setLoad('คำนวณ CDC จริง ' + (i+1) + '/' + candidates.length + ' — ' + c.symbol.toUpperCase());
+      try {
+        const hr = await fetch('https://api.coingecko.com/api/v3/coins/' + c.id + '/market_chart?vs_currency=usd&days=60&interval=daily');
+        if (hr.ok) {
+          const hd = await hr.json();
+          const closes = hd.prices.map(p => p[1]);
+          const cdc = cdcStatus(closes);
+          if (cdc) {
+            analyzed.push({
+              symbol: (c.symbol||'').toUpperCase(), name: c.name, rank: c.market_cap_rank,
+              price: c.current_price,
+              chg24h: +(c.price_change_percentage_24h_in_currency || 0).toFixed(2),
+              chg7d: +(c.price_change_percentage_7d_in_currency || 0).toFixed(2),
+              vol_mcap: +((c.total_volume / c.market_cap) * 100).toFixed(1),
+              high24h: c.high_24h, low24h: c.low_24h,
+              cdc_status: cdc.status, bars_since_cross: cdc.barsSince,
+              ema12: cdc.ema12, ema26: cdc.ema26, ema_gap_pct: cdc.gap,
+              last5: closes.slice(-5).map(v => +v.toFixed(6))
+            });
+          }
+        }
+      } catch(e) {}
+      await new Promise(r => setTimeout(r, 1300));
+    }
+
+    const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1, GREEN: 2};
+    const qualified = analyzed
+      .filter(c => c.cdc_status in RANKED)
+      .sort((a, b) => RANKED[a.cdc_status] - RANKED[b.cdc_status] || b.vol_mcap - a.vol_mcap)
+      .slice(0, 5);
+
+    setLoad('วิเคราะห์ทองคำ...');
+    let goldCloses = null, goldCur = null, goldCdc = null;
+    try {
+      const ghr = await fetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=60&interval=daily');
+      if (ghr.ok) {
+        const ghd = await ghr.json();
+        goldCloses = ghd.prices.map(p => p[1]);
+        goldCur = +goldCloses[goldCloses.length-1].toFixed(1);
+        goldCdc = cdcStatus(goldCloses);
+      }
+    } catch(e) {}
+
+    if (!qualified.length && !goldCdc) throw new Error('วันนี้ไม่มีเหรียญที่ CDC เขียวสดหรือใกล้ตัดขึ้นเลยครับ — ตลาดยังไม่ให้สัญญาณ ถือเงินสดรอดีที่สุด');
+
+    setLoad('Rex กำลังสรุปแผน...');
+    const goldStatusTH = goldCdc ? (goldCdc.status==='RED'?'แดง':goldCdc.status==='NEAR_CROSS'?'รอยืนยัน':'เขียว') : 'รอยืนยัน';
+    const prompt = 'คุณคือ Rex นักวิเคราะห์ CDC ActionZone ของคุณออยล์\n' +
+      'ระบบคำนวณ EMA12/26 จากราคาปิดจริง 60 วันแล้ว ผลเหรียญที่ผ่านเกณฑ์ CDC:\n' +
+      JSON.stringify(qualified) + '\n' +
+      'ความหมาย cdc_status: FRESH_GREEN=เพิ่งตัดขึ้น 1-3 แท่ง (ดีสุด), NEAR_CROSS=EMA12 กำลังไต่ใกล้ตัด (สะสมรอยืนยัน), GREEN=เขียวช่วงต้น\n' +
+      (goldCdc ? ('ทองคำ XAU ราคา $' + goldCur + ' CDC จริง: ' + JSON.stringify(goldCdc) + ' ราคาปิด 10 วันล่าสุด: ' + JSON.stringify(goldCloses.slice(-10).map(v=>+v.toFixed(1))) + '\n') : '') +
+      'เลือกเหรียญที่ดีที่สุดไม่เกิน 3 ตัว คำนวณโซนเข้า (ใกล้ราคาปัจจุบัน/pullback สั้น), SL (ใต้ low24h หรือใต้ EMA26), TP1 (+10-20%)\n' +
+      'ทองก็เช่นกัน ให้โซนเข้า/SL/TP ที่สมเหตุสมผลกับราคาปัจจุบัน\n' +
+      'ตอบ JSON เท่านั้น ไม่มี markdown:\n' +
+      '{"summary":"ภาพรวม ไทย 1-2 ประโยค","gold":{"cdc":"' + goldStatusTH + '","summary":"เทรนด์ทอง+คำแนะนำ ไทย 2 ประโยค","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"risk":"ไทย 1 ประโยค"},"coins":[{"symbol":"TICKER","name":"ชื่อ + อันดับ + สถานะ CDC ภาษาไทย","price":"$ราคา","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"reason":"เหตุผล CDC จากตัวเลขจริง (บอกด้วยว่าตัดขึ้นมากี่แท่ง) ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"}]}';
+
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1500,
-        tools: [{type:'web_search_20250305', name:'web_search', max_uses:2}],
-        messages: [{role:'user', content:SCAN_PROMPT}]
+        messages: [{role:'user', content:prompt}]
       })
     });
     if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || 'API ' + res.status); }
@@ -589,10 +709,10 @@ async function scanCoins() {
     const clean = raw.replace(/```json|```/g, '').trim();
     let parsed = null;
     try { parsed = JSON.parse(clean); } catch(e1) {
-      const m = clean.match(/\{[\s\S]*\}/);
-      if (m) { try { parsed = JSON.parse(m[0]); } catch(e2){} }
+      const m2 = clean.match(/\{[\s\S]*\}/);
+      if (m2) { try { parsed = JSON.parse(m2[0]); } catch(e2){} }
       if (!parsed) {
-        let rep = (m ? m[0] : clean);
+        let rep = (m2 ? m2[0] : clean);
         const q = (rep.match(/(?<!\\)"/g) || []).length;
         if (q % 2 === 1) rep += '"';
         const o = (rep.match(/\{/g)||[]).length - (rep.match(/\}/g)||[]).length;
@@ -601,11 +721,14 @@ async function scanCoins() {
         parsed = JSON.parse(rep);
       }
     }
-    if (!parsed.coins || !Array.isArray(parsed.coins)) throw new Error('รูปแบบข้อมูลผิด กดใหม่');
+    if (!parsed.coins || !Array.isArray(parsed.coins)) throw new Error('รูปแบบข้อมูลผิด กดสแกนใหม่');
     const scanData = {result: parsed, time: new Date().toISOString()};
     try { await window.storage.set('is_scan_result', JSON.stringify(scanData)); } catch(e) {}
     renderScan(parsed, new Date());
-    // mark scan task done
+    if (parsed.gold && goldCur) {
+      try { await window.storage.set('is_gold_result', JSON.stringify({result: parsed.gold, cur: goldCur, time: new Date().toISOString()})); } catch(e) {}
+      renderGold(parsed.gold, goldCur, new Date());
+    }
     const si = tasks.findIndex(t => t.text.includes('สแกนเหรียญ') && !t.done);
     if (si >= 0) { tasks[si].done = true; saveTasks(); renderTasks(); }
   } catch(e) {
@@ -624,57 +747,75 @@ function renderScan(parsed, dt) {
     s.style.display = 'block';
     s.textContent = '📊 ' + parsed.summary;
   }
-  document.getElementById('coin-list').innerHTML = parsed.coins.map((c, i) => `
+  document.getElementById('coin-list').innerHTML = parsed.coins.map((c, i) => {
+    const fmt = n => n == null ? '—' : (n < 1 ? '$' + Number(n).toFixed(4) : '$' + Number(n).toLocaleString('en-US',{maximumFractionDigits:2}));
+    return `
     <div class="coin-card">
       <div class="coin-head">
         <div class="coin-av">${(c.symbol||'?').substring(0,4)}</div>
-        <div style="flex:1;"><div class="coin-sym">${c.symbol||'—'}</div><div class="coin-price">สแกน: ${c.price||''}</div>
-        <div class="coin-price" id="live-${i}" style="color:var(--amb);">🔄 กำลังดึงราคาสด...</div></div>
+        <div style="flex:1;"><div class="coin-sym">${c.symbol||'—'} <span style="font-weight:400;font-size:11px;color:var(--tx3);">${c.name||''}</span></div>
+        <div class="coin-price" id="live-${i}" style="color:var(--amb);">🔄 กำลังเช็คราคาปัจจุบัน...</div></div>
+      </div>
+      <div id="verdict-${i}"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;font-family:'JetBrains Mono',monospace;">
+        <span style="background:var(--gl);color:var(--gd);border:1px solid var(--gm);border-radius:6px;padding:3px 8px;">เข้า ${fmt(c.entry_low)}–${fmt(c.entry_high)}</span>
+        <span style="background:var(--rl);color:var(--red);border:1px solid rgba(226,75,74,.3);border-radius:6px;padding:3px 8px;">SL ${fmt(c.sl)}</span>
+        <span style="background:var(--pubg);color:#AFA9EC;border:1px solid rgba(127,119,221,.3);border-radius:6px;padding:3px 8px;">TP ${fmt(c.tp1)}</span>
       </div>
       <div class="coin-sec"><span class="coin-label">เหตุผล + CDC</span>${c.reason||'—'}</div>
-      <div class="coin-levels">📍 ${c.levels||'—'}</div>
       <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   document.getElementById('scan-time').textContent = (dt||new Date()).toLocaleDateString('th-TH') + ' ' + (dt||new Date()).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
   fetchLivePrices(parsed.coins);
 }
 
-// ดึงราคาสดจาก CoinGecko เทียบกับราคาตอนสแกน
+// ดึงราคาสด แล้วเทียบกับโซนเข้า → บอก action ชัดๆ
 async function fetchLivePrices(coins) {
   for (let i = 0; i < coins.length; i++) {
     const el = document.getElementById('live-' + i);
+    const vd = document.getElementById('verdict-' + i);
     if (!el) continue;
     try {
-      // แยก ticker จาก symbol เช่น "DEXE — อันดับ..." → "DEXE"
       const ticker = (coins[i].symbol || '').split(/[\s—(]/)[0].trim();
       if (!ticker) { el.textContent = ''; continue; }
-      // หา coin id จาก CoinGecko search
       const sr = await fetch('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(ticker));
       if (!sr.ok) throw new Error();
       const sd = await sr.json();
       const hit = (sd.coins || []).find(c => c.symbol.toUpperCase() === ticker.toUpperCase()) || (sd.coins || [])[0];
-      if (!hit) { el.textContent = '⚠️ หาราคาสดไม่เจอ เช็คใน Bybit'; continue; }
+      if (!hit) { el.innerHTML = '<span style="color:var(--tx3);">เช็คราคาใน Bybit</span>'; continue; }
       const pr = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=' + hit.id + '&vs_currencies=usd&include_24hr_change=true');
       if (!pr.ok) throw new Error();
       const pd = await pr.json();
       const live = pd[hit.id];
-      if (!live) { el.textContent = '⚠️ หาราคาสดไม่เจอ'; continue; }
+      if (!live) { el.innerHTML = '<span style="color:var(--tx3);">เช็คราคาใน Bybit</span>'; continue; }
       const price = live.usd;
       const chg = live.usd_24h_change || 0;
-      // เทียบกับราคาตอนสแกน (ดึงตัวเลขแรกจาก string)
-      const scanNum = parseFloat((coins[i].price || '').replace(/[^0-9.]/g, ''));
-      let diffTxt = '';
-      if (scanNum && scanNum > 0) {
-        const diff = ((price - scanNum) / scanNum) * 100;
-        if (Math.abs(diff) > 3) {
-          diffTxt = ` <span style="color:${diff > 0 ? 'var(--red)' : 'var(--gd)'};font-weight:600;">(${diff > 0 ? '+' : ''}${diff.toFixed(1)}% จากตอนสแกน${diff > 5 ? ' ⚠️ อย่าไล่!' : ''})</span>`;
+      const fmtP = price < 1 ? '$' + price.toFixed(4) : '$' + price.toLocaleString('en-US',{maximumFractionDigits:2});
+      el.innerHTML = `<span style="color:var(--tx);font-weight:700;font-size:15px;">${fmtP}</span> <span style="color:${chg >= 0 ? 'var(--gd)' : 'var(--red)'};">${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%</span>`;
+
+      // ===== ACTION VERDICT: ราคาปัจจุบัน vs โซนเข้า =====
+      const eLow = Number(coins[i].entry_low), eHigh = Number(coins[i].entry_high), sl = Number(coins[i].sl), tp = Number(coins[i].tp1);
+      if (vd && eLow && eHigh && sl) {
+        let html = '';
+        if (price <= sl) {
+          html = `<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">❌ ราคาต่ำกว่า SL แล้ว — setup เสีย ไม่เข้า</div>`;
+        } else if (price >= eLow && price <= eHigh) {
+          html = `<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้าพอดี — เช็ค CDC ใน TradingView แล้วเข้าได้ 25% + ตั้ง SL ทันที</div>`;
+        } else if (price < eLow) {
+          const gap = ((eLow - price) / price * 100).toFixed(1);
+          html = `<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ราคาต่ำกว่าโซนเข้า ${gap}% — แนวโน้มอาจอ่อนแรง รอเด้งกลับเข้าโซน + CDC เขียวก่อน</div>`;
+        } else if (tp && price >= tp) {
+          html = `<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🚫 ราคาถึง TP แล้ว — รถออกไปแล้ว ห้ามไล่! รอ setup ใหม่</div>`;
+        } else {
+          const over = ((price - eHigh) / eHigh * 100).toFixed(1);
+          html = `<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ ราคาเลยโซนเข้าไป +${over}% — อย่าไล่ ตั้ง alert ที่ ${eHigh < 1 ? '$'+eHigh.toFixed(4) : '$'+eHigh.toLocaleString()} รอย่อกลับ</div>`;
         }
+        vd.innerHTML = html;
       }
-      el.innerHTML = `<span style="color:var(--gd);">สด: $${price < 1 ? price.toFixed(4) : price.toLocaleString('en-US',{maximumFractionDigits:2})}</span> <span style="color:${chg >= 0 ? 'var(--gd)' : 'var(--red)'};">${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%/24h</span>${diffTxt}`;
-      // เว้นจังหวะกัน rate limit
       await new Promise(r => setTimeout(r, 600));
     } catch(e) {
-      el.textContent = '⚠️ ดึงราคาสดไม่ได้ เช็คใน Bybit';
+      el.innerHTML = '<span style="color:var(--tx3);">เช็คราคาใน Bybit</span>';
     }
   }
 }
@@ -799,10 +940,65 @@ async function chatSend() {
   document.getElementById('send-btn').disabled = false;
 }
 
+// ===== GOLD (PAXG = ทองจริง 1 oz) =====
+function fmtG(n){ return n==null?'—':'$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
+
+async function loadGoldPrice() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd&include_24hr_change=true');
+    if (!r.ok) return null;
+    const d = await r.json();
+    const g = d['pax-gold'];
+    if (!g || g.usd < 1000) return null;
+    document.getElementById('gold-price').textContent = fmtG(g.usd);
+    const ce = document.getElementById('gold-chg');
+    const chg = g.usd_24h_change || 0;
+    ce.textContent = (chg>=0?'+':'') + chg.toFixed(2) + '% (24h)';
+    ce.className = chg>=0 ? 'up' : 'dn';
+    return g.usd;
+  } catch(e) { return null; }
+}
+
+async function analyzeGold() { return scanCoins(); }
+
+function renderGold(g, cur, dt) {
+  const el = id => document.getElementById(id);
+  el('gold-loading').style.display='none';
+  el('gold-result').style.display='block';
+  const cdcColor = g.cdc==='เขียว' ? 'var(--gd)' : g.cdc==='แดง' ? 'var(--red)' : 'var(--amb)';
+  el('gold-chips').innerHTML =
+    '<span style="background:var(--bg3);color:'+cdcColor+';border:1px solid '+cdcColor+';border-radius:6px;padding:3px 8px;font-weight:700;">CDC: '+(g.cdc||'—')+'</span>' +
+    '<span style="background:var(--gl);color:var(--gd);border:1px solid var(--gm);border-radius:6px;padding:3px 8px;">เข้า '+fmtG(g.entry_low)+'–'+fmtG(g.entry_high)+'</span>' +
+    '<span style="background:var(--rl);color:var(--red);border:1px solid rgba(226,75,74,.3);border-radius:6px;padding:3px 8px;">SL '+fmtG(g.sl)+'</span>' +
+    '<span style="background:var(--pubg);color:#AFA9EC;border:1px solid rgba(127,119,221,.3);border-radius:6px;padding:3px 8px;">TP '+fmtG(g.tp1)+'</span>';
+  el('gold-reason').innerHTML = '<span class="coin-label">Rex วิเคราะห์</span>' + (g.summary||'—');
+  el('gold-risk').textContent = '⚠️ ' + (g.risk||'—');
+  // verdict เทียบราคาปัจจุบันกับโซน
+  let v = '';
+  if (g.entry_low && g.entry_high && cur) {
+    if (cur >= g.entry_low && cur <= g.entry_high) v = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้า — เช็ค CDC จริงแล้วจัดได้</div>';
+    else if (cur > g.entry_high) v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ เลยโซนเข้าแล้ว — รอย่อ อย่าไล่</div>';
+    else v = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ต่ำกว่าโซนเข้า — รอสัญญาณกลับตัวก่อน</div>';
+  }
+  el('gold-verdict').innerHTML = v;
+  el('gold-time').textContent = (dt||new Date()).toLocaleDateString('th-TH') + ' ' + (dt||new Date()).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function loadGoldCache() {
+  const cur = await loadGoldPrice();
+  try {
+    const saved = await window.storage.get('is_gold_result');
+    if (saved && saved.value) {
+      const d = JSON.parse(saved.value);
+      if (d.result) renderGold(d.result, cur || d.cur, new Date(d.time));
+    }
+  } catch(e) {}
+}
+
 // ===== INIT =====
 window.addEventListener('load', () => {
   if (apiKey) { document.getElementById('key-in').value = apiKey; document.getElementById('key-ok').style.display='block'; }
-  renderTasks(); renderIncome(); loadTradePlan(); loadScanCache();
+  renderTasks(); renderIncome(); loadTradePlan(); loadScanCache(); loadGoldCache();
 });
 </script>
 </body>
