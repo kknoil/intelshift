@@ -567,6 +567,23 @@ function saveKey() {
 
 // ===== SCAN (CDC จริง: คำนวณ EMA12/26 ในเครื่อง ฟรี → ส่งเฉพาะตัวที่ผ่านให้ AI ~1฿) =====
 
+// fetch CoinGecko พร้อม retry/backoff กัน rate limit
+async function cgFetch(url, tries) {
+  tries = tries || 3;
+  for (let t = 0; t < tries; t++) {
+    try {
+      const r = await fetch(url);
+      if (r.ok) return r;
+      if (r.status === 429) { await new Promise(x => setTimeout(x, 4000 * (t+1))); continue; }
+      return r;
+    } catch(e) {
+      // Safari โยน "Load failed" เมื่อโดนบล็อก/เน็ตสะดุด — รอแล้วลองใหม่
+      await new Promise(x => setTimeout(x, 3000 * (t+1)));
+    }
+  }
+  return null;
+}
+
 // คำนวณ EMA แบบเดียวกับ TradingView
 function calcEMA(values, period) {
   const k = 2 / (period + 1);
@@ -605,6 +622,15 @@ async function scanCoins() {
     document.getElementById('scan-key-hint').style.display = 'block';
     return;
   }
+  // cooldown 90 วิ กัน CoinGecko rate limit
+  const lastScan = +(localStorage.getItem('is_last_scan_ts') || 0);
+  const waitLeft = Math.ceil((90000 - (Date.now() - lastScan)) / 1000);
+  if (waitLeft > 0) {
+    document.getElementById('scan-error').style.display = 'block';
+    document.getElementById('scan-error-msg').textContent = 'เพิ่งสแกนไปเมื่อกี้ — รออีก ' + waitLeft + ' วินาทีค่อยกดใหม่ครับ (กัน CoinGecko บล็อก)';
+    return;
+  }
+  localStorage.setItem('is_last_scan_ts', String(Date.now()));
   const el = id => document.getElementById(id);
   const setLoad = t => { el('scan-loading').innerHTML = '<div class="dots"><span></span><span></span><span></span></div><div style="margin-top:8px;">' + t + '</div>'; };
   el('scan-key-hint').style.display = 'none';
@@ -617,8 +643,8 @@ async function scanCoins() {
 
   try {
     // STEP 1 (ฟรี): เหรียญอันดับ 20-150 กรอง momentum + volume
-    const mr = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=150&page=1&price_change_percentage=24h%2C7d');
-    if (!mr.ok) throw new Error('ดึงข้อมูลตลาดไม่ได้ ลองใหม่อีกครั้ง');
+    const mr = await cgFetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=150&page=1&price_change_percentage=24h%2C7d');
+    if (!mr || !mr.ok) throw new Error('CoinGecko จำกัดความถี่ชั่วคราว — รอ 1-2 นาทีแล้วกดสแกนใหม่ครับ');
     const all = await mr.json();
     const SKIP = ['usdt','usdc','dai','busd','tusd','usde','fdusd','wbtc','weth','wsteth','steth','cbbtc','reth','usds','pyusd','usdd','usdt0','bsc-usd'];
     const candidates = all
@@ -629,7 +655,7 @@ async function scanCoins() {
         return d7 > -10 && d7 < 50;
       })
       .sort((a, b) => (b.total_volume / b.market_cap) - (a.total_volume / a.market_cap))
-      .slice(0, 10);
+      .slice(0, 15);
 
     if (!candidates.length) throw new Error('วันนี้ไม่มีเหรียญเข้าเงื่อนไข ลองพรุ่งนี้ครับ');
 
@@ -637,15 +663,15 @@ async function scanCoins() {
     setLoad('วิเคราะห์ทองคำก่อน...');
     let goldCloses = null, goldCur = null, goldCdc = null;
     try {
-      const ghr = await fetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=60&interval=daily');
-      if (ghr.ok) {
+      const ghr = await cgFetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=60&interval=daily');
+      if (ghr && ghr.ok) {
         const ghd = await ghr.json();
         goldCloses = ghd.prices.map(p => p[1]);
         goldCur = +goldCloses[goldCloses.length-1].toFixed(1);
         goldCdc = cdcStatus(goldCloses);
       }
     } catch(e) {}
-    await new Promise(r => setTimeout(r, 1300));
+    await new Promise(r => setTimeout(r, 2000));
 
     // STEP 2 (ฟรี): ดึงกราฟ 60 วันทีละเหรียญ → คำนวณ CDC จริงในเครื่อง
     const analyzed = [];
@@ -653,8 +679,8 @@ async function scanCoins() {
       const c = candidates[i];
       setLoad('คำนวณ CDC จริง ' + (i+1) + '/' + candidates.length + ' — ' + c.symbol.toUpperCase());
       try {
-        const hr = await fetch('https://api.coingecko.com/api/v3/coins/' + c.id + '/market_chart?vs_currency=usd&days=60&interval=daily');
-        if (hr.ok) {
+        const hr = await cgFetch('https://api.coingecko.com/api/v3/coins/' + c.id + '/market_chart?vs_currency=usd&days=60&interval=daily', 2);
+        if (hr && hr.ok) {
           const hd = await hr.json();
           const closes = hd.prices.map(p => p[1]);
           const cdc = cdcStatus(closes);
