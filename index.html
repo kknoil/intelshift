@@ -235,7 +235,11 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
       <div class="scan-loading" id="scan-loading"><div class="dots"><span></span><span></span><span></span></div><div style="margin-top:8px;">Rex กำลังสแกนตลาด...</div></div>
       <div class="scan-error" id="scan-error">❌ <span id="scan-error-msg"></span> — <button onclick="scanCoins()">สแกนใหม่</button></div>
       <div id="coin-list"></div>
-      <button class="btn btn-purple btn-full" id="scan-btn" onclick="scanCoins()">🔍 สแกนทอง + เหรียญวันนี้ (~1฿)</button>
+      <div id="short-section" style="display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--br);">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--red);margin-bottom:8px;">📉 ฝั่ง SHORT — โอกาสตอนตลาดขาลง</div>
+        <div id="short-list"></div>
+      </div>
+      <button class="btn btn-purple btn-full" id="scan-btn" onclick="scanCoins()" style="margin-top:12px;">🔍 สแกนทอง + เหรียญวันนี้ (~1฿)</button>
       <div class="scan-note" style="margin-top:10px;">ข้อมูลสดจาก CoinGecko + AI วิเคราะห์ ไม่ใช่คำแนะนำการลงทุน เช็กราคาจริงบน Bybit และรอ CDC ยืนยันก่อนเข้าเสมอ</div>
     </div>
 
@@ -612,7 +616,9 @@ function cdcStatus(closes) {
   if (green && barsSince <= 3) status = 'FRESH_GREEN';
   else if (green && barsSince <= 8) status = 'GREEN';
   else if (green) status = 'OLD_GREEN';
+  else if (!green && barsSince <= 3) status = 'FRESH_RED';   // เพิ่งตัดลง = โอกาส Short สด
   else if (!green && gap > -1 && e12[n] > e12[n-2]) status = 'NEAR_CROSS';
+  else if (!green) status = 'RED';
   else status = 'RED';
   return { status, barsSince: barsSince === 999 ? null : barsSince, ema12: +e12[n].toFixed(6), ema26: +e26[n].toFixed(6), gap: +gap.toFixed(2) };
 }
@@ -652,7 +658,8 @@ async function scanCoins() {
       .filter(c => !SKIP.includes((c.symbol||'').toLowerCase()))
       .filter(c => {
         const d7 = c.price_change_percentage_7d_in_currency || 0;
-        return d7 > -10 && d7 < 50;
+        // เปิดกว้างขึ้นทั้งสองทาง: กันดอยฝั่ง Long (+50%) และกันไล่ short ตัวที่ดิ่งไปแล้วลึกเกิน (-30%)
+        return d7 > -30 && d7 < 50;
       })
       .sort((a, b) => (b.total_volume / b.market_cap) - (a.total_volume / a.market_cap))
       .slice(0, 15);
@@ -728,27 +735,36 @@ async function scanCoins() {
       await new Promise(r => setTimeout(r, 1300));
     }
 
-    const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1}; // เอาเฉพาะของสด — ตัด GREEN 4+ แท่ง (บทเรียน SUN)
+    const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1}; // Long: เอาเฉพาะของสด — ตัด GREEN 4+ แท่ง (บทเรียน SUN)
     const qualified = analyzed
       .filter(c => c.cdc_status in RANKED)
       .sort((a, b) => RANKED[a.cdc_status] - RANKED[b.cdc_status] || b.vol_mcap - a.vol_mcap)
       .slice(0, 5);
 
-    if (!qualified.length && !goldCdc) throw new Error('วันนี้ไม่มีเหรียญ CDC เขียวสด (1-3 แท่ง) หรือใกล้ตัดขึ้นเลย — ' + (btcCdc && btcCdc.status === 'RED' ? 'BTC เองก็ยังแดง ' : '') + 'ถือเงินสดรอคือ position ที่ถูกต้องครับ');
+    // Short: เอาเฉพาะ FRESH_RED (เพิ่งตัดลง 1-3 แท่ง) — โอกาสตอนตลาดขาลง
+    const qualifiedShort = analyzed
+      .filter(c => c.cdc_status === 'FRESH_RED')
+      .sort((a, b) => b.vol_mcap - a.vol_mcap)
+      .slice(0, 3);
+
+    if (!qualified.length && !qualifiedShort.length && !goldCdc) throw new Error('วันนี้ไม่มีเหรียญ CDC เขียวสดหรือแดงสดเลย — ' + (btcCdc && btcCdc.status === 'RED' ? 'BTC เองก็ยังแดง ' : '') + 'ถือเงินสดรอคือ position ที่ถูกต้องครับ');
 
     setLoad('Rex กำลังสรุปแผน...');
     const goldStatusTH = goldCdc ? (goldCdc.status==='RED'?'แดง':goldCdc.status==='NEAR_CROSS'?'รอยืนยัน':'เขียว') : 'รอยืนยัน';
-    const prompt = 'คุณคือ Rex นักวิเคราะห์ CDC ActionZone ของคุณออยล์\n' +
-      'ระบบคำนวณ EMA12/26 จากราคาปิดจริง 60 วันแล้ว ผลเหรียญที่ผ่านเกณฑ์ CDC:\n' +
-      JSON.stringify(qualified) + '\n' +
-      'ความหมาย cdc_status: FRESH_GREEN=เพิ่งตัดขึ้น 1-3 แท่ง (ดีสุด), NEAR_CROSS=EMA12 ใกล้ตัด (รอยืนยัน ยังไม่ใช่สัญญาณเข้า)\n' +
+    const prompt = 'คุณคือ Rex นักวิเคราะห์ CDC ActionZone ของคุณออยล์ วิเคราะห์ทั้งฝั่ง Long และ Short\n' +
+      'ระบบคำนวณ EMA12/26 จากราคาปิดจริง 60 วันแล้ว\n' +
+      'ผู้สมัครฝั่ง LONG (CDC เขียวสด/ใกล้ตัดขึ้น):\n' + JSON.stringify(qualified) + '\n' +
+      'ผู้สมัครฝั่ง SHORT (CDC เพิ่งตัดลง 1-3 แท่ง = FRESH_RED):\n' + JSON.stringify(qualifiedShort) + '\n' +
+      'ความหมาย cdc_status: FRESH_GREEN=เพิ่งตัดขึ้น 1-3 แท่ง (ดีสุดสำหรับ Long), NEAR_CROSS=EMA12 ใกล้ตัด (รอยืนยัน), FRESH_RED=เพิ่งตัดลง 1-3 แท่ง (ดีสุดสำหรับ Short)\n' +
       'สภาพตลาดใหญ่ BTC CDC: ' + (btcCdc ? JSON.stringify(btcCdc) : 'ไม่มีข้อมูล') + '\n' +
-      'กติกาเพิ่ม: ถ้า vol_confirm < 1 ให้ระบุใน risk ว่า volume ไม่ยืนยัน | ถ้า dist_ema12_pct > 8 ให้แนะนำรอ pullback แทนการเข้าทันที | ถ้า BTC เป็น RED ให้บอกใน summary ว่าควรลดขนาดไม้ครึ่งนึงหรืองดเปิด Long\n' +
+      'กติกาเพิ่ม: ถ้า vol_confirm < 1 ให้ระบุใน risk ว่า volume ไม่ยืนยัน | ถ้า dist_ema12_pct > 8 (Long) หรือ < -8 (Short) ให้แนะนำรอ pullback แทนการเข้าทันที | ถ้า BTC เป็น RED ให้บอกใน summary ว่าฝั่ง Long ควรลดไม้ครึ่งหนึ่งหรืองด แต่ฝั่ง Short เข้าได้ตามปกติเพราะสอดคล้องทิศทางตลาดใหญ่ | ถ้า BTC เป็น GREEN ให้กลับกัน คือ Short ควรระวัง\n' +
       (goldCdc ? ('ทองคำ XAU ราคา $' + goldCur + ' CDC จริง: ' + JSON.stringify(goldCdc) + ' ราคาปิด 10 วันล่าสุด: ' + JSON.stringify(goldCloses.slice(-10).map(v=>+v.toFixed(1))) + '\n') : '') +
-      'เลือกเหรียญที่ดีที่สุดไม่เกิน 3 ตัว คำนวณโซนเข้า (ใกล้ราคาปัจจุบัน/pullback สั้น), SL (ใต้ low24h หรือใต้ EMA26), TP1 (+10-20%)\n' +
-      'ทองก็เช่นกัน ให้โซนเข้า/SL/TP ที่สมเหตุสมผลกับราคาปัจจุบัน\n' +
+      'เลือกเหรียญ Long ดีที่สุดไม่เกิน 3 ตัว จากผู้สมัคร Long, เลือก Short ดีที่สุดไม่เกิน 2 ตัวจากผู้สมัคร Short (ถ้ามี)\n' +
+      'Long: entry ใกล้ราคาปัจจุบัน/pullback สั้น, SL ใต้ low24h/EMA26, TP1 +10-20%\n' +
+      'Short: entry ใกล้ราคาปัจจุบัน/รีบาวด์สั้น, SL เหนือ high24h/EMA26, TP1 -10-20%\n' +
+      'ทองก็เช่นกัน ให้โซนเข้า/SL/TP ที่สมเหตุสมผลกับราคาปัจจุบัน (ระบุทิศทางที่เหมาะใน cdc)\n' +
       'ตอบ JSON เท่านั้น ไม่มี markdown:\n' +
-      '{"summary":"ภาพรวม ไทย 1-2 ประโยค","gold":{"cdc":"' + goldStatusTH + '","summary":"เทรนด์ทอง+คำแนะนำ ไทย 2 ประโยค","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"risk":"ไทย 1 ประโยค"},"coins":[{"symbol":"TICKER","name":"ชื่อ + อันดับ + สถานะ CDC ภาษาไทย","price":"$ราคา","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"reason":"เหตุผล CDC จากตัวเลขจริง (บอกด้วยว่าตัดขึ้นมากี่แท่ง) ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"}]}';
+      '{"summary":"ภาพรวม ไทย 1-2 ประโยค","gold":{"cdc":"' + goldStatusTH + '","summary":"เทรนด์ทอง+คำแนะนำ ไทย 2 ประโยค","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"risk":"ไทย 1 ประโยค"},"coins":[{"symbol":"TICKER","name":"ชื่อ + อันดับ + สถานะ CDC ภาษาไทย","price":"$ราคา","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"reason":"เหตุผล CDC จากตัวเลขจริง ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"}],"coins_short":[{"symbol":"TICKER","name":"ชื่อ + อันดับ + สถานะ CDC ภาษาไทย","price":"$ราคา","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"reason":"เหตุผล CDC ฝั่ง Short จากตัวเลขจริง ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"}]}';
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -840,15 +856,49 @@ function renderScan(parsed, dt) {
       <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
     </div>`;
   }).join('');
+
+  // ===== SHORT SECTION =====
+  const shortCoins = parsed.coins_short || [];
+  const shortWrap = document.getElementById('short-section');
+  if (shortCoins.length) {
+    shortWrap.style.display = 'block';
+    document.getElementById('short-list').innerHTML = shortCoins.map((c, i) => {
+      const fmt = n => n == null ? '—' : (n < 1 ? '$' + Number(n).toFixed(4) : '$' + Number(n).toLocaleString('en-US',{maximumFractionDigits:2}));
+      return `
+      <div class="coin-card" style="border-color:rgba(226,75,74,.3);">
+        <div class="coin-head">
+          <div class="coin-av" style="background:rgba(226,75,74,.15);border-color:rgba(226,75,74,.3);color:var(--red);">${(c.symbol||'?').substring(0,4)}</div>
+          <div style="flex:1;"><div class="coin-sym">${c.symbol||'—'} <span style="font-size:10px;background:rgba(226,75,74,.2);color:var(--red);border-radius:4px;padding:1px 6px;margin-left:4px;">SHORT</span> <span style="font-weight:400;font-size:11px;color:var(--tx3);">${c.name||''}</span></div>
+          <div class="coin-price" id="live-s${i}" style="color:var(--amb);">🔄 กำลังเช็คราคาปัจจุบัน...</div></div>
+        </div>
+        <div id="verdict-s${i}"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;font-family:'JetBrains Mono',monospace;">
+          <span style="background:rgba(226,75,74,.12);color:var(--red);border:1px solid rgba(226,75,74,.3);border-radius:6px;padding:3px 8px;">เข้า Short ${fmt(c.entry_low)}–${fmt(c.entry_high)}</span>
+          <span style="background:var(--gl);color:var(--gd);border:1px solid var(--gm);border-radius:6px;padding:3px 8px;">SL ${fmt(c.sl)}</span>
+          <span style="background:var(--pubg);color:#AFA9EC;border:1px solid rgba(127,119,221,.3);border-radius:6px;padding:3px 8px;">TP ${fmt(c.tp1)}</span>
+        </div>
+        <div class="coin-sec"><span class="coin-label">เหตุผล + CDC</span>${c.reason||'—'}</div>
+        <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
+      </div>`;
+    }).join('');
+  } else {
+    shortWrap.style.display = 'none';
+  }
+
   document.getElementById('scan-time').textContent = (dt||new Date()).toLocaleDateString('th-TH') + ' ' + (dt||new Date()).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-  fetchLivePrices(parsed.coins);
+  fetchLivePrices(parsed.coins, 'live-', 'verdict-', 'long');
+  if (shortCoins.length) fetchLivePrices(shortCoins, 'live-s', 'verdict-s', 'short');
 }
 
 // ดึงราคาสด แล้วเทียบกับโซนเข้า → บอก action ชัดๆ (ใช้ id ที่ cache ไว้ กัน rate limit)
-async function fetchLivePrices(coins) {
+// direction: 'long' หรือ 'short' — สลับ logic ตัดสินใจ
+async function fetchLivePrices(coins, pricePrefix, verdictPrefix, direction) {
+  pricePrefix = pricePrefix || 'live-';
+  verdictPrefix = verdictPrefix || 'verdict-';
+  direction = direction || 'long';
   for (let i = 0; i < coins.length; i++) {
-    const el = document.getElementById('live-' + i);
-    const vd = document.getElementById('verdict-' + i);
+    const el = document.getElementById(pricePrefix + i);
+    const vd = document.getElementById(verdictPrefix + i);
     if (!el) continue;
     const ticker = (coins[i].symbol || '').split(/[\s—(]/)[0].trim().toUpperCase();
     const cached = (window._cgMap || {})[ticker];
@@ -886,18 +936,35 @@ async function fetchLivePrices(coins) {
     const eLow = Number(coins[i].entry_low), eHigh = Number(coins[i].entry_high), sl = Number(coins[i].sl), tp = Number(coins[i].tp1);
     if (vd && eLow && eHigh && sl) {
       let html = '';
-      if (price <= sl) {
-        html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">❌ ราคาต่ำกว่า SL แล้ว — setup เสีย ไม่เข้า</div>';
-      } else if (price >= eLow && price <= eHigh) {
-        html = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้าพอดี — เช็ค CDC ใน TradingView แล้วเข้าได้ 25% + ตั้ง SL ทันที</div>';
-      } else if (price < eLow) {
-        const gap = ((eLow - price) / price * 100).toFixed(1);
-        html = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ราคาต่ำกว่าโซนเข้า ' + gap + '% — รอเด้งกลับเข้าโซน + CDC เขียวก่อน</div>';
-      } else if (tp && price >= tp) {
-        html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🚫 ราคาถึง TP แล้ว — รถออกไปแล้ว ห้ามไล่! รอ setup ใหม่</div>';
+      if (direction === 'short') {
+        // Short: SL อยู่เหนือ entry, TP อยู่ใต้ entry — ทุกเงื่อนไขกลับด้าน
+        if (price >= sl) {
+          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">❌ ราคาสูงกว่า SL แล้ว — setup Short เสีย ไม่เข้า</div>';
+        } else if (price >= eLow && price <= eHigh) {
+          html = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้า Short พอดี — เช็ค CDC ยืนยันแล้ว Short ได้ 25% + ตั้ง SL ทันที</div>';
+        } else if (price > eHigh) {
+          const gap = ((price - eHigh) / eHigh * 100).toFixed(1);
+          html = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ราคาสูงกว่าโซนเข้า ' + gap + '% — รอรีบาวด์ลงมาโซน + CDC ยังแดงก่อน</div>';
+        } else if (tp && price <= tp) {
+          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🚫 ราคาถึง TP แล้ว — รถออกไปแล้ว ห้ามไล่ Short! รอ setup ใหม่</div>';
+        } else {
+          const under = ((eLow - price) / eLow * 100).toFixed(1);
+          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ ราคาต่ำกว่าโซนเข้าไปแล้ว ' + under + '% — อย่าไล่ Short รอรีบาวด์กลับเข้าโซนก่อน</div>';
+        }
       } else {
-        const over = ((price - eHigh) / eHigh * 100).toFixed(1);
-        html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ ราคาเลยโซนเข้าไป +' + over + '% — อย่าไล่ รอย่อกลับเข้าโซนก่อน</div>';
+        if (price <= sl) {
+          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">❌ ราคาต่ำกว่า SL แล้ว — setup เสีย ไม่เข้า</div>';
+        } else if (price >= eLow && price <= eHigh) {
+          html = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้าพอดี — เช็ค CDC ใน TradingView แล้วเข้าได้ 25% + ตั้ง SL ทันที</div>';
+        } else if (price < eLow) {
+          const gap = ((eLow - price) / price * 100).toFixed(1);
+          html = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ราคาต่ำกว่าโซนเข้า ' + gap + '% — รอเด้งกลับเข้าโซน + CDC เขียวก่อน</div>';
+        } else if (tp && price >= tp) {
+          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🚫 ราคาถึง TP แล้ว — รถออกไปแล้ว ห้ามไล่! รอ setup ใหม่</div>';
+        } else {
+          const over = ((price - eHigh) / eHigh * 100).toFixed(1);
+          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ ราคาเลยโซนเข้าไป +' + over + '% — อย่าไล่ รอย่อกลับเข้าโซนก่อน</div>';
+        }
       }
       vd.innerHTML = html;
     }
@@ -1050,17 +1117,30 @@ function renderGold(g, cur, dt) {
   const el = id => document.getElementById(id);
   el('gold-loading').style.display='none';
   el('gold-result').style.display='block';
-  const cdcColor = g.cdc==='เขียว' ? 'var(--gd)' : g.cdc==='แดง' ? 'var(--red)' : 'var(--amb)';
+  const isGreen = g.cdc === 'เขียว';
+  const isRed = g.cdc === 'แดง';
+  const cdcColor = isGreen ? 'var(--gd)' : isRed ? 'var(--red)' : 'var(--amb)';
+  const dirLabel = isGreen ? '📈 LONG' : isRed ? '📉 SHORT' : '⏳ รอสัญญาณ';
+  const dirColor = isGreen ? 'var(--gd)' : isRed ? 'var(--red)' : 'var(--amb)';
   el('gold-chips').innerHTML =
     '<span style="background:var(--bg3);color:'+cdcColor+';border:1px solid '+cdcColor+';border-radius:6px;padding:3px 8px;font-weight:700;">CDC: '+(g.cdc||'—')+'</span>' +
+    '<span style="background:var(--bg3);color:'+dirColor+';border:1px solid '+dirColor+';border-radius:6px;padding:3px 8px;font-weight:700;">ทิศทาง: '+dirLabel+'</span>' +
     '<span style="background:var(--gl);color:var(--gd);border:1px solid var(--gm);border-radius:6px;padding:3px 8px;">เข้า '+fmtG(g.entry_low)+'–'+fmtG(g.entry_high)+'</span>' +
     '<span style="background:var(--rl);color:var(--red);border:1px solid rgba(226,75,74,.3);border-radius:6px;padding:3px 8px;">SL '+fmtG(g.sl)+'</span>' +
     '<span style="background:var(--pubg);color:#AFA9EC;border:1px solid rgba(127,119,221,.3);border-radius:6px;padding:3px 8px;">TP '+fmtG(g.tp1)+'</span>';
   el('gold-reason').innerHTML = '<span class="coin-label">Rex วิเคราะห์</span>' + (g.summary||'—');
   el('gold-risk').textContent = '⚠️ ' + (g.risk||'—');
-  // verdict เทียบราคาปัจจุบันกับโซน
+  // verdict เทียบราคาปัจจุบันกับโซน — คำนึงทิศทาง Long/Short ด้วย
   let v = '';
-  if (g.entry_low && g.entry_high && cur) {
+  if (isRed) {
+    // ทองแดง = โซนเข้าคือจุด Short (entry_low/high คือกรอบรีบาวด์ที่จะเข้าขาย)
+    if (g.entry_low && g.entry_high && cur) {
+      if (cur >= g.entry_low && cur <= g.entry_high) v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">✅ CDC แดง + ราคาอยู่ในโซน — พิจารณา Short ได้ (ห้าม Long)</div>';
+      else v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🔴 CDC แดง — ห้าม Long เด็ดขาด รอราคาเข้าโซนก่อนพิจารณา Short</div>';
+    } else {
+      v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🔴 CDC แดง — ห้ามเปิด Long วันนี้</div>';
+    }
+  } else if (g.entry_low && g.entry_high && cur) {
     if (cur >= g.entry_low && cur <= g.entry_high) v = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้า — เช็ค CDC จริงแล้วจัดได้</div>';
     else if (cur > g.entry_high) v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ เลยโซนเข้าแล้ว — รอย่อ อย่าไล่</div>';
     else v = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ต่ำกว่าโซนเข้า — รอสัญญาณกลับตัวก่อน</div>';
