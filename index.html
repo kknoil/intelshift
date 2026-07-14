@@ -671,7 +671,19 @@ async function scanCoins() {
         goldCdc = cdcStatus(goldCloses);
       }
     } catch(e) {}
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 1500));
+
+    // 🚦 BTC Market Filter: เช็ค CDC ของ BTC ก่อน (กระแสน้ำใหญ่)
+    setLoad('เช็คสภาพตลาดใหญ่ (BTC)...');
+    let btcCdc = null;
+    try {
+      const bhr = await cgFetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=60&interval=daily');
+      if (bhr && bhr.ok) {
+        const bhd = await bhr.json();
+        btcCdc = cdcStatus(bhd.prices.map(p => p[1]));
+      }
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 1500));
 
     // STEP 2 (ฟรี): ดึงกราฟ 60 วันทีละเหรียญ → คำนวณ CDC จริงในเครื่อง
     const analyzed = [];
@@ -684,6 +696,16 @@ async function scanCoins() {
           const hd = await hr.json();
           const closes = hd.prices.map(p => p[1]);
           const cdc = cdcStatus(closes);
+          // volume confirmation: แท่งล่าสุดเทียบค่าเฉลี่ย 20 วัน
+          let volConfirm = null;
+          try {
+            const vols = (hd.total_volumes || []).map(v => v[1]);
+            if (vols.length > 21) {
+              const last = vols[vols.length-1];
+              const avg20 = vols.slice(-21, -1).reduce((a,b)=>a+b,0) / 20;
+              volConfirm = +((last / avg20)).toFixed(2); // >1 = volume สูงกว่าค่าเฉลี่ย
+            }
+          } catch(ve) {}
           if (cdc) {
             window._cgMap = window._cgMap || {};
             window._cgMap[(c.symbol||'').toUpperCase()] = { id: c.id, price: closes[closes.length-1] };
@@ -696,6 +718,8 @@ async function scanCoins() {
               high24h: c.high_24h, low24h: c.low_24h,
               cdc_status: cdc.status, bars_since_cross: cdc.barsSince,
               ema12: cdc.ema12, ema26: cdc.ema26, ema_gap_pct: cdc.gap,
+              vol_confirm: volConfirm,
+              dist_ema12_pct: +(((c.current_price - cdc.ema12) / cdc.ema12) * 100).toFixed(1),
               last5: closes.slice(-5).map(v => +v.toFixed(6))
             });
           }
@@ -704,20 +728,22 @@ async function scanCoins() {
       await new Promise(r => setTimeout(r, 1300));
     }
 
-    const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1, GREEN: 2};
+    const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1}; // เอาเฉพาะของสด — ตัด GREEN 4+ แท่ง (บทเรียน SUN)
     const qualified = analyzed
       .filter(c => c.cdc_status in RANKED)
       .sort((a, b) => RANKED[a.cdc_status] - RANKED[b.cdc_status] || b.vol_mcap - a.vol_mcap)
       .slice(0, 5);
 
-    if (!qualified.length && !goldCdc) throw new Error('วันนี้ไม่มีเหรียญที่ CDC เขียวสดหรือใกล้ตัดขึ้นเลยครับ — ตลาดยังไม่ให้สัญญาณ ถือเงินสดรอดีที่สุด');
+    if (!qualified.length && !goldCdc) throw new Error('วันนี้ไม่มีเหรียญ CDC เขียวสด (1-3 แท่ง) หรือใกล้ตัดขึ้นเลย — ' + (btcCdc && btcCdc.status === 'RED' ? 'BTC เองก็ยังแดง ' : '') + 'ถือเงินสดรอคือ position ที่ถูกต้องครับ');
 
     setLoad('Rex กำลังสรุปแผน...');
     const goldStatusTH = goldCdc ? (goldCdc.status==='RED'?'แดง':goldCdc.status==='NEAR_CROSS'?'รอยืนยัน':'เขียว') : 'รอยืนยัน';
     const prompt = 'คุณคือ Rex นักวิเคราะห์ CDC ActionZone ของคุณออยล์\n' +
       'ระบบคำนวณ EMA12/26 จากราคาปิดจริง 60 วันแล้ว ผลเหรียญที่ผ่านเกณฑ์ CDC:\n' +
       JSON.stringify(qualified) + '\n' +
-      'ความหมาย cdc_status: FRESH_GREEN=เพิ่งตัดขึ้น 1-3 แท่ง (ดีสุด), NEAR_CROSS=EMA12 กำลังไต่ใกล้ตัด (สะสมรอยืนยัน), GREEN=เขียวช่วงต้น\n' +
+      'ความหมาย cdc_status: FRESH_GREEN=เพิ่งตัดขึ้น 1-3 แท่ง (ดีสุด), NEAR_CROSS=EMA12 ใกล้ตัด (รอยืนยัน ยังไม่ใช่สัญญาณเข้า)\n' +
+      'สภาพตลาดใหญ่ BTC CDC: ' + (btcCdc ? JSON.stringify(btcCdc) : 'ไม่มีข้อมูล') + '\n' +
+      'กติกาเพิ่ม: ถ้า vol_confirm < 1 ให้ระบุใน risk ว่า volume ไม่ยืนยัน | ถ้า dist_ema12_pct > 8 ให้แนะนำรอ pullback แทนการเข้าทันที | ถ้า BTC เป็น RED ให้บอกใน summary ว่าควรลดขนาดไม้ครึ่งนึงหรืองดเปิด Long\n' +
       (goldCdc ? ('ทองคำ XAU ราคา $' + goldCur + ' CDC จริง: ' + JSON.stringify(goldCdc) + ' ราคาปิด 10 วันล่าสุด: ' + JSON.stringify(goldCloses.slice(-10).map(v=>+v.toFixed(1))) + '\n') : '') +
       'เลือกเหรียญที่ดีที่สุดไม่เกิน 3 ตัว คำนวณโซนเข้า (ใกล้ราคาปัจจุบัน/pullback สั้น), SL (ใต้ low24h หรือใต้ EMA26), TP1 (+10-20%)\n' +
       'ทองก็เช่นกัน ให้โซนเข้า/SL/TP ที่สมเหตุสมผลกับราคาปัจจุบัน\n' +
@@ -752,6 +778,7 @@ async function scanCoins() {
       }
     }
     if (!parsed.coins || !Array.isArray(parsed.coins)) throw new Error('รูปแบบข้อมูลผิด กดสแกนใหม่');
+    parsed.btc = btcCdc || null;
     const scanData = {result: parsed, time: new Date().toISOString()};
     try { await window.storage.set('is_scan_result', JSON.stringify(scanData)); } catch(e) {}
     renderScan(parsed, new Date());
@@ -772,6 +799,23 @@ async function scanCoins() {
 
 function renderScan(parsed, dt) {
   document.getElementById('scan-loading').style.display = 'none';
+  // 🚦 BTC market banner
+  const oldB = document.getElementById('btc-banner'); if (oldB) oldB.remove();
+  if (parsed.btc) {
+    const s = parsed.btc.status;
+    let bg, bd, tx, msg;
+    if (s === 'RED') { bg='var(--rl)'; bd='rgba(226,75,74,.4)'; tx='var(--red)'; msg='🔴 BTC ขาลง (EMA12<26) — งดเปิด Long วันนี้ ผลด้านล่างเป็น watchlist เท่านั้น'; }
+    else if (s === 'NEAR_CROSS') { bg='var(--abg)'; bd='rgba(239,159,39,.35)'; tx='var(--amb)'; msg='🟡 BTC ใกล้ตัดขึ้น รอยืนยัน — ถ้าจะเข้า ใช้ไม้ครึ่งเดียว'; }
+    else if (s === 'FRESH_GREEN') { bg='var(--gl)'; bd='var(--gm)'; tx='var(--gd)'; msg='🟢 BTC เพิ่งตัดขึ้น ' + (parsed.btc.barsSince!=null?parsed.btc.barsSince+' แท่ง':'') + ' — ตลาดเริ่มเป็นใจ เข้าตามระบบได้'; }
+    else if (s === 'GREEN' || s === 'OLD_GREEN') { bg='var(--gl)'; bd='var(--gm)'; tx='var(--gd)'; msg='🟢 BTC โซนเขียว — ตลาดเป็นใจ เข้าตามระบบได้'; }
+    else { bg='var(--bg3)'; bd='var(--br)'; tx='var(--tx2)'; msg='BTC: ' + s; }
+    const b = document.createElement('div');
+    b.id = 'btc-banner';
+    b.style.cssText = 'background:'+bg+';border:1px solid '+bd+';border-radius:var(--rs);padding:10px 12px;margin-bottom:10px;font-size:13px;font-weight:600;color:'+tx+';';
+    b.textContent = msg;
+    const sc = document.getElementById('scan-summary');
+    sc.parentNode.insertBefore(b, sc);
+  }
   if (parsed.summary) {
     const s = document.getElementById('scan-summary');
     s.style.display = 'block';
