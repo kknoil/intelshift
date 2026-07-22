@@ -178,7 +178,8 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
         <div style="font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--red);margin-bottom:8px;">📉 ฝั่ง SHORT — โอกาสตอนตลาดขาลง</div>
         <div id="short-list"></div>
       </div>
-      <button class="btn btn-purple btn-full" id="scan-btn" onclick="scanCoins()" style="margin-top:12px;">🔍 สแกนทอง + เหรียญวันนี้ (~1฿)</button>
+      <button class="btn btn-purple btn-full" id="scan-btn" onclick="scanCoins()" style="margin-top:12px;">🔍 สแกนทอง + เหรียญวันนี้ (~0.5฿)</button>
+      <div id="scan-cost" style="display:none;font-size:11px;color:var(--tx3);margin-top:8px;text-align:center;"></div>
       <div class="scan-note" style="margin-top:10px;">ข้อมูลสดจาก CoinGecko + AI วิเคราะห์ ไม่ใช่คำแนะนำการลงทุน เช็กราคาจริงบน Bybit และรอ CDC ยืนยนก่อนเข้าเสมอ</div>
     </div>
   </div>
@@ -576,13 +577,29 @@ function levelBlock(lv, isShort, fmt) {
 }
 </script>
 <script>
+const SCAN_COOLDOWN_MS = 60000; // กันยิง CoinGecko ถี่เกิน (ปรับได้ ถ้าเจอ error 429 บ่อยให้เพิ่มเป็น 90000)
+const SCAN_BTN_LABEL = '🔍 สแกนทอง + เหรียญวันนี้ (~0.5฿)';
+let cooldownTimer = null;
+function startCooldownCountdown() {
+  const btn = document.getElementById('scan-btn');
+  if (!btn) return;
+  clearInterval(cooldownTimer);
+  const tick = () => {
+    const lastScan = +(localStorage.getItem('is_last_scan_ts') || 0);
+    const left = Math.ceil((SCAN_COOLDOWN_MS - (Date.now() - lastScan)) / 1000);
+    if (left > 0) { btn.disabled = true; btn.textContent = '⏳ สแกนใหม่ได้ในอีก ' + left + ' วิ'; }
+    else { btn.disabled = false; btn.textContent = SCAN_BTN_LABEL; clearInterval(cooldownTimer); }
+  };
+  tick();
+  cooldownTimer = setInterval(tick, 1000);
+}
+
 async function scanCoins() {
   if (!apiKey) { document.getElementById('scan-key-hint').style.display = 'block'; return; }
   const lastScan = +(localStorage.getItem('is_last_scan_ts') || 0);
-  const waitLeft = Math.ceil((90000 - (Date.now() - lastScan)) / 1000);
+  const waitLeft = Math.ceil((SCAN_COOLDOWN_MS - (Date.now() - lastScan)) / 1000);
   if (waitLeft > 0) {
-    document.getElementById('scan-error').style.display = 'block';
-    document.getElementById('scan-error-msg').textContent = 'เพิ่งสแกนไปเมื่อกี — รออีก ' + waitLeft + ' วินาทีค่อยกดใหม่ครับ (กัน CoinGecko บล็อก)';
+    startCooldownCountdown(); // ปุ่มจะนับถอยหลังให้เห็นชัด ไม่เงียบ
     return;
   }
   localStorage.setItem('is_last_scan_ts', String(Date.now()));
@@ -726,6 +743,14 @@ async function scanCoins() {
     });
     if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || 'API ' + res.status); }
     const data = await res.json();
+    // โชว์ว่า API ยิงจริง + token/ค่าใช้จ่ายจริง (Haiku 4.5 = $1/$5 ต่อล้าน token)
+    try {
+      const u = data.usage || {};
+      const inT = u.input_tokens || 0, outT = u.output_tokens || 0;
+      const thb = (inT/1e6*1 + outT/1e6*5) * 35; // ~35 บาท/ดอลลาร์
+      const ce = document.getElementById('scan-cost');
+      if (ce) { ce.style.display = 'block'; ce.textContent = '✅ ยิง API แล้ว · ' + (inT+outT).toLocaleString() + ' token (in ' + inT + ' / out ' + outT + ') · ~฿' + thb.toFixed(2); }
+    } catch(ue) {}
     const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
     const clean = raw.replace(/```json|```/g, '').trim();
     let parsed = null;
@@ -764,7 +789,7 @@ async function scanCoins() {
     document.getElementById('scan-error').style.display = 'block';
     document.getElementById('scan-error-msg').textContent = e.message;
   } finally {
-    document.getElementById('scan-btn').disabled = false;
+    startCooldownCountdown();
   }
 }
 
@@ -1046,6 +1071,7 @@ async function loadGoldCache() {
 window.addEventListener('load', () => {
   if (apiKey) { document.getElementById('key-in').value = apiKey; document.getElementById('key-ok').style.display='block'; }
   renderTasks(); renderIncome(); loadTradePlan(); loadScanCache(); loadGoldCache();
+  startCooldownCountdown();
 });
 </script>
 </body>
