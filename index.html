@@ -19,37 +19,25 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-size:15px;min-height:100vh;}
 .app{max-width:640px;margin:0 auto;padding-bottom:80px;}
-
-/* HEADER */
 .header{padding:1.25rem 1rem .75rem;display:flex;align-items:center;justify-content:space-between;}
 .logo{font-size:17px;font-weight:700;}
 .logo span{color:var(--g);}
 .date{font-size:12px;color:var(--tx3);}
-
-/* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--br);display:flex;justify-content:space-around;padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:100;}
 .bn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--tx3);font-size:10px;cursor:pointer;font-family:inherit;padding:4px 16px;}
 .bn.active{color:var(--g);}
 .bn-icon{font-size:20px;}
-
-/* PAGES */
 .page{display:none;padding:0 1rem;}
 .page.active{display:block;}
-
-/* CARDS */
 .card{background:var(--bg2);border:1px solid var(--br);border-radius:var(--r);padding:1.125rem;margin-bottom:12px;}
 .card-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--tx3);margin-bottom:.875rem;display:flex;align-items:center;justify-content:space-between;}
 .up{color:var(--gd);} .dn{color:var(--red);} .warn{color:var(--amb);}
 .mono{font-family:'JetBrains Mono',monospace;}
-
-/* MARKET LINE */
 .mkt-row{display:flex;gap:10px;}
 .mkt-item{flex:1;background:var(--bg3);border-radius:var(--rs);padding:12px;text-align:center;}
 .mkt-sym{font-size:11px;color:var(--tx3);margin-bottom:4px;font-weight:600;}
 .mkt-price{font-size:17px;font-weight:700;font-family:'JetBrains Mono',monospace;}
 .mkt-chg{font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:3px;}
-
-/* POSITION */
 .pos-status{display:flex;align-items:center;gap:12px;background:var(--bg3);border-radius:var(--rs);padding:14px;}
 .pos-light{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
 .pos-light.ok{background:var(--g);box-shadow:0 0 12px rgba(29,158,117,.5);}
@@ -60,8 +48,6 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
 .pos-main{font-size:14px;font-weight:600;}
 .pos-sub{font-size:12px;color:var(--tx2);margin-top:2px;line-height:1.5;}
 .pos-edit{font-size:11px;color:var(--pu);background:none;border:none;cursor:pointer;font-family:inherit;padding:4px;}
-
-/* TASKS */
 .task-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--br);}
 .task-item:last-child{border-bottom:none;}
 .task-cb{width:24px;height:24px;border-radius:7px;border:2px solid var(--br2);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;transition:all .15s;}
@@ -77,8 +63,6 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
 .btn-purple{background:var(--pu);}
 .btn-full{width:100%;margin-top:4px;}
 .btn:disabled{opacity:.5;}
-
-/* SCAN */
 .scan-summary{font-size:13px;color:var(--tx2);background:var(--bg3);border-left:3px solid var(--pu);border-radius:var(--rs);padding:12px;margin-bottom:10px;line-height:1.65;display:none;}
 .scan-loading{display:none;text-align:center;padding:1.5rem 0;color:var(--tx3);font-size:13px;}
 .dots span{width:8px;height:8px;border-radius:50%;background:var(--pu);display:inline-block;margin:0 2px;animation:blink 1.2s infinite;}
@@ -98,13 +82,9 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
 .coin-risk{font-size:12px;color:var(--red);background:var(--rl);border:1px solid rgba(226,75,74,.2);border-radius:var(--rs);padding:8px 10px;line-height:1.5;}
 .scan-note{font-size:11px;color:var(--tx3);line-height:1.6;padding-top:10px;border-top:1px solid var(--br);}
 .key-hint{display:none;font-size:13px;color:var(--amb);background:var(--abg);border:1px solid rgba(239,159,39,.3);border-radius:var(--rs);padding:12px;}
-
-/* TRADE PLAN */
 .tp-body{width:100%;min-height:180px;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:14px;font-size:14px;line-height:1.9;color:var(--tx);font-family:'JetBrains Mono',monospace;resize:vertical;outline:none;white-space:pre-wrap;}
 .tp-body:focus{border-color:var(--pu);}
 .tp-saved{font-size:12px;color:var(--g);display:none;}
-
-/* INCOME */
 .inc-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--br);font-size:14px;}
 .inc-row:last-child{border-bottom:none;}
 .inc-name{color:var(--tx2);}
@@ -112,8 +92,6 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
 .inc-add{display:flex;gap:8px;margin-top:12px;}
 .inc-add input{flex:1;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:11px 13px;font-size:14px;color:var(--tx);font-family:inherit;outline:none;}
 .inc-add select{background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:11px 10px;font-size:13px;color:var(--tx);font-family:inherit;outline:none;}
-
-/* REX PAGE */
 .price-hero{display:flex;gap:10px;margin-bottom:12px;}
 .ph-item{flex:1;background:var(--bg2);border:1px solid var(--br);border-radius:var(--r);padding:1rem;}
 .ph-sym{font-size:11px;color:var(--tx3);font-weight:600;margin-bottom:4px;}
@@ -124,8 +102,6 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
 .sig-row:last-child{border-bottom:none;}
 .sig-name{color:var(--tx2);}
 .sig-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}
-
-/* CHAT */
 .chat-container{display:flex;flex-direction:column;height:calc(100vh - 190px);}
 .agent-row{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;}
 .ab{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;border:1px solid var(--br);background:var(--bg2);color:var(--tx2);font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap;}
@@ -147,8 +123,6 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
 .welcome{text-align:center;padding:2rem 0;color:var(--tx3);font-size:13px;}
 .sugg-wrap{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px;}
 .sugg{font-size:13px;padding:9px 15px;border-radius:20px;border:1px solid var(--br);background:var(--bg2);color:var(--tx2);cursor:pointer;font-family:inherit;}
-
-/* SETUP */
 .key-input-row{display:flex;gap:8px;}
 .key-input{flex:1;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:var(--tx);font-family:monospace;outline:none;}
 .small-note{font-size:12px;color:var(--tx3);line-height:1.7;margin-top:10px;}
@@ -161,63 +135,30 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
     <div class="logo">Intel<span>Shift</span></div>
     <div class="date" id="today-date"></div>
   </div>
-
-  <!-- ========== TODAY ========== -->
   <div id="page-today" class="page active">
-
-    <!-- MARKET -->
     <div class="card">
       <div class="card-title"><span>ตลาดตอนนี้</span><span style="font-size:10px;color:var(--tx3);" id="mkt-upd">โหลด...</span></div>
       <div class="mkt-row">
-        <div class="mkt-item">
-          <div class="mkt-sym">BTC</div>
-          <div class="mkt-price" id="m-btc">—</div>
-          <div class="mkt-chg" id="m-btc-c">—</div>
-        </div>
-        <div class="mkt-item">
-          <div class="mkt-sym">XAU (ทอง)</div>
-          <div class="mkt-price" id="m-xau">—</div>
-          <div class="mkt-chg" id="m-xau-c">—</div>
-        </div>
-        <div class="mkt-item">
-          <div class="mkt-sym">ETH</div>
-          <div class="mkt-price" id="m-eth">—</div>
-          <div class="mkt-chg" id="m-eth-c">—</div>
-        </div>
+        <div class="mkt-item"><div class="mkt-sym">BTC</div><div class="mkt-price" id="m-btc">—</div><div class="mkt-chg" id="m-btc-c">—</div></div>
+        <div class="mkt-item"><div class="mkt-sym">XAU (ทอง)</div><div class="mkt-price" id="m-xau">—</div><div class="mkt-chg" id="m-xau-c">—</div></div>
+        <div class="mkt-item"><div class="mkt-sym">ETH</div><div class="mkt-price" id="m-eth">—</div><div class="mkt-chg" id="m-eth-c">—</div></div>
       </div>
     </div>
-
-    <!-- POSITION -->
     <div class="card">
       <div class="card-title"><span>โพซิชั่นของเรา</span><button class="pos-edit" onclick="showPage('plan')">แก้แผน →</button></div>
-      <div class="pos-status">
-        <div class="pos-light ok" id="pos-light"></div>
-        <div class="pos-text">
-          <div class="pos-main" id="pos-main">ยังไม่มีโพซิชั่น</div>
-          <div class="pos-sub" id="pos-sub">เขียนแผนที่แท็บ Plan แล้วสถานะจะโชว์ที่นี่</div>
-        </div>
-      </div>
+      <div class="pos-status"><div class="pos-light ok" id="pos-light"></div><div class="pos-text"><div class="pos-main" id="pos-main">ยังไม่มีโพซิชั่น</div><div class="pos-sub" id="pos-sub">เขียนแผนที่แท็บ Plan แล้วสถานะจะโชว์ที่นี่</div></div></div>
     </div>
-
-    <!-- TASKS -->
     <div class="card">
       <div class="card-title"><span>วันนี้ทำอะไร</span><span style="font-size:11px;color:var(--amb);" id="task-count">0</span></div>
       <div id="task-list"></div>
-      <div class="task-add-row">
-        <input class="task-input" id="task-input" placeholder="เพิ่มสิ่งที่ต้องทำ..." onkeydown="if(event.key==='Enter')addTask()"/>
-        <button class="btn" onclick="addTask()">+</button>
-      </div>
+      <div class="task-add-row"><input class="task-input" id="task-input" placeholder="เพิ่มสิ่งที่ต้องทำ..." onkeydown="if(event.key==='Enter')addTask()"/><button class="btn" onclick="addTask()">+</button></div>
     </div>
-
-    <!-- GOLD -->
     <div class="card" style="border-color:rgba(239,159,39,.35);">
       <div class="card-title"><span style="color:var(--amb);">🥇 ทองคำวันนี้ (XAU)</span><span style="font-size:10px;color:var(--tx3);" id="gold-time"></span></div>
-      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px;">
-        <span style="font-size:26px;font-weight:700;font-family:'JetBrains Mono',monospace;" id="gold-price">—</span>
-        <span style="font-size:13px;font-family:'JetBrains Mono',monospace;" id="gold-chg">—</span>
-      </div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px;"><span style="font-size:26px;font-weight:700;font-family:'JetBrains Mono',monospace;" id="gold-price">—</span><span style="font-size:13px;font-family:'JetBrains Mono',monospace;" id="gold-chg">—</span></div>
       <div id="gold-verdict"></div>
       <div id="gold-result" style="display:none;">
+        <div id="gold-plan"></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;font-family:'JetBrains Mono',monospace;" id="gold-chips"></div>
         <div class="coin-sec" id="gold-reason"></div>
         <div class="coin-risk" id="gold-risk" style="margin-bottom:8px;"></div>
@@ -226,8 +167,6 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
       <div class="scan-error" id="gold-error">❌ <span id="gold-error-msg"></span> — <button onclick="analyzeGold()">ลองใหม่</button></div>
       <div style="font-size:11px;color:var(--tx3);">อัปเดตพร้อมปุ่มสแกนด้านล่าง — กดครั้งเดียวได้ทั้งทอง + เหรียญ</div>
     </div>
-
-    <!-- SCAN -->
     <div class="card">
       <div class="card-title"><span style="color:#AFA9EC;">🔍 AI สแกนเหรียญ (CDC Style)</span><span style="font-size:10px;color:var(--tx3);" id="scan-time"></span></div>
       <div class="key-hint" id="scan-key-hint">⚠️ ใส่ API Key ที่แท็บ ⚙️ ก่อนครับ</div>
@@ -242,27 +181,13 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
       <button class="btn btn-purple btn-full" id="scan-btn" onclick="scanCoins()" style="margin-top:12px;">🔍 สแกนทอง + เหรียญวันนี้ (~1฿)</button>
       <div class="scan-note" style="margin-top:10px;">ข้อมูลสดจาก CoinGecko + AI วิเคราะห์ ไม่ใช่คำแนะนำการลงทุน เช็กราคาจริงบน Bybit และรอ CDC ยืนยันก่อนเข้าเสมอ</div>
     </div>
-
   </div>
-
-  <!-- ========== REX ========== -->
   <div id="page-rex" class="page">
     <div class="price-hero">
-      <div class="ph-item">
-        <div class="ph-sym">BTC / USD</div>
-        <div class="ph-price" id="r-btc">—</div>
-        <div class="ph-chg" id="r-btc-c">—</div>
-      </div>
-      <div class="ph-item">
-        <div class="ph-sym">XAU / USD</div>
-        <div class="ph-price" id="r-xau">—</div>
-        <div class="ph-chg" id="r-xau-c">—</div>
-      </div>
+      <div class="ph-item"><div class="ph-sym">BTC / USD</div><div class="ph-price" id="r-btc">—</div><div class="ph-chg" id="r-btc-c">—</div></div>
+      <div class="ph-item"><div class="ph-sym">XAU / USD</div><div class="ph-price" id="r-xau">—</div><div class="ph-chg" id="r-xau-c">—</div></div>
     </div>
-    <div class="card">
-      <div class="card-title"><span>BTC — 30 วัน</span></div>
-      <div class="chart-wrap"><canvas id="btc-chart"></canvas></div>
-    </div>
+    <div class="card"><div class="card-title"><span>BTC — 30 วัน</span></div><div class="chart-wrap"><canvas id="btc-chart"></canvas></div></div>
     <div class="card">
       <div class="card-title"><span>สัญญาณ</span></div>
       <div class="sig-row"><span class="sig-name">RSI (โดยประมาณ)</span><span class="sig-val" id="s-rsi">—</span></div>
@@ -271,8 +196,6 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
     </div>
     <div class="card" style="font-size:12px;color:var(--tx3);line-height:1.6;">⚠️ ประกอบการตัดสินใจเท่านั้น เช็ค CDC ActionZone จริงใน TradingView ก่อนเข้าเสมอ</div>
   </div>
-
-  <!-- ========== PLAN ========== -->
   <div id="page-plan" class="page">
     <div class="card">
       <div class="card-title"><span>📌 Trade Plans</span><span class="tp-saved" id="tp-saved">✓ บันทึกแล้ว</span></div>
@@ -286,15 +209,9 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
       <div class="inc-row"><span class="inc-name">📈 เทรด (กำไร/ขาดทุนจริง)</span><span class="inc-val" id="i-trade">฿0</span></div>
       <div class="inc-row"><span class="inc-name">💼 อื่นๆ</span><span class="inc-val" id="i-other">฿0</span></div>
       <div class="inc-row" style="border-top:2px solid var(--br2);"><span class="inc-name" style="font-weight:600;color:var(--tx);">รวม</span><span class="inc-val up" style="font-size:17px;" id="i-total">฿0</span></div>
-      <div class="inc-add">
-        <input id="inc-val" type="number" placeholder="จำนวน (ลบได้ถ้าขาดทุน)"/>
-        <select id="inc-type"><option value="tiktok">TikTok</option><option value="trade">เทรด</option><option value="other">อื่นๆ</option></select>
-        <button class="btn" onclick="addIncome()">+</button>
-      </div>
+      <div class="inc-add"><input id="inc-val" type="number" placeholder="จำนวน (ลบได้ถ้าขาดทุน)"/><select id="inc-type"><option value="tiktok">TikTok</option><option value="trade">เทรด</option><option value="other">อื่นๆ</option></select><button class="btn" onclick="addIncome()">+</button></div>
     </div>
   </div>
-
-  <!-- ========== CHAT ========== -->
   <div id="page-chat" class="page">
     <div class="chat-container">
       <div class="agent-row">
@@ -309,32 +226,19 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
       </div>
     </div>
   </div>
-
-  <!-- ========== SETUP ========== -->
   <div id="page-setup" class="page">
     <div class="card">
       <div class="card-title"><span>🔑 Anthropic API Key</span></div>
-      <div class="key-input-row">
-        <input type="password" class="key-input" id="key-in" placeholder="sk-ant-api03-..."/>
-        <button class="btn" onclick="saveKey()">บันทึก</button>
-      </div>
+      <div class="key-input-row"><input type="password" class="key-input" id="key-in" placeholder="sk-ant-api03-..."/><button class="btn" onclick="saveKey()">บันทึก</button></div>
       <div class="small-note">Key เก็บในเครื่องนี้เท่านั้น · สมัครที่ <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br>ใช้กับ: สแกนเหรียญ (~1฿/ครั้ง) และ Chat (~0.1฿/ข้อความ)</div>
       <div id="key-ok" style="font-size:12px;color:var(--g);margin-top:8px;display:none;">✅ พร้อมใช้งาน</div>
     </div>
     <div class="card">
       <div class="card-title"><span>เคล็ดลับประหยัด</span></div>
-      <div style="font-size:13px;color:var(--tx2);line-height:1.8;">
-        · สแกนวันละ 1 ครั้งพอ ผลถูกเก็บไว้ดูซ้ำได้ฟรี<br>
-        · ตั้ง Price Alert ใน Bybit แทนการเช็คบ่อยๆ<br>
-        · วิเคราะห์ยาวๆ ไปคุยใน Claude.ai (ฟรีตาม plan)<br>
-        · Chat ในนี้ใช้ถามสั้นๆ เร็วๆ พอ
-      </div>
+      <div style="font-size:13px;color:var(--tx2);line-height:1.8;">· สแกนวันละ 1 ครั้งพอ ผลถูกเก็บไว้ดูซ้ำได้ฟรี<br>· ตั้ง Price Alert ใน Bybit แทนการเช็คบ่อยๆ<br>· วิเคราะห์ยาวๆ ไปคุยใน Claude.ai (ฟรีตาม plan)<br>· Chat ในนี้ใช้ถามสั้นๆ เร็วๆ พอ</div>
     </div>
   </div>
-
 </div>
-
-<!-- BOTTOM NAV -->
 <div class="bottom-nav">
   <button class="bn active" id="bn-today" onclick="showPage('today')"><span class="bn-icon">🏠</span>Today</button>
   <button class="bn" id="bn-rex" onclick="showPage('rex')"><span class="bn-icon">📊</span>Rex</button>
@@ -342,9 +246,7 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
   <button class="bn" id="bn-chat" onclick="showPage('chat')"><span class="bn-icon">💬</span>Chat</button>
   <button class="bn" id="bn-setup" onclick="showPage('setup')"><span class="bn-icon">⚙️</span>ตั้งค่า</button>
 </div>
-
 <script>
-// ===== STATE =====
 let apiKey = localStorage.getItem('is_key') || '';
 let tasks = JSON.parse(localStorage.getItem('is_tasks') || '[]');
 let income = JSON.parse(localStorage.getItem('is_income2') || '{"tiktok":0,"trade":0,"other":0}');
@@ -353,7 +255,6 @@ let curAgent = 'aria';
 let chatBusy = false;
 let btcChart = null;
 
-// ===== NAV =====
 function showPage(p) {
   document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
   document.querySelectorAll('.bn').forEach(x => x.classList.remove('active'));
@@ -363,12 +264,10 @@ function showPage(p) {
   if (p === 'chat') renderChat();
 }
 
-// ===== DATE =====
-const days = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'];
+const days = ['อาทิตย์','จนทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'];
 const d = new Date();
 document.getElementById('today-date').textContent = 'วัน' + days[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1);
 
-// ===== MARKET (Today) =====
 async function loadMarket() {
   try {
     const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,pax-gold&vs_currencies=usd&include_24hr_change=true');
@@ -379,9 +278,7 @@ async function loadMarket() {
     if (dd['pax-gold'] && dd['pax-gold'].usd > 1000) setMkt('m-xau', 'm-xau-c', dd['pax-gold'].usd, dd['pax-gold'].usd_24h_change);
     document.getElementById('mkt-upd').textContent = new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
     window._mktData = dd;
-  } catch(e) {
-    document.getElementById('mkt-upd').textContent = 'โหลดไม่ได้ ลอง refresh';
-  }
+  } catch(e) { document.getElementById('mkt-upd').textContent = 'โหลดไม่ได้ ลอง refresh'; }
 }
 function setMkt(pid, cid, price, chg) {
   document.getElementById(pid).textContent = '$' + Math.round(price).toLocaleString();
@@ -392,7 +289,6 @@ function setMkt(pid, cid, price, chg) {
 loadMarket();
 setInterval(loadMarket, 60000);
 
-// ===== POSITION STATUS (from all plan cards' first lines) =====
 function updatePosition() {
   const plans = getPlans();
   const light = document.getElementById('pos-light');
@@ -402,7 +298,7 @@ function updatePosition() {
   if (!active.length) {
     light.className = 'pos-light ok';
     main.textContent = 'ยังไม่มีโพซิชั่น';
-    sub.textContent = 'เขียนแผนที่แท็บ Plan แล้วสถานะจะโชว์ที่นี่';
+    sub.textContent = 'เขยนแผนที่แท็บ Plan แล้วสถานะจะโชว์ทีนี่';
     return;
   }
   main.textContent = active[0].text.split('\n')[0].trim();
@@ -414,41 +310,24 @@ function updatePosition() {
   light.className = 'pos-light ok';
 }
 
-// ===== TASKS =====
-// Daily tasks reset every new day; custom tasks persist until deleted
-const DAILY_TASKS = [
-  '🎬 โพสต์คลิป TikTok (17:00-20:00)',
-  '🔍 สแกนเหรียญประจำวัน',
-  '📊 เช็คโพซิชั่น + CDC ใน TradingView'
-];
-
-function todayKey() {
-  const n = new Date();
-  return n.getFullYear() + '-' + (n.getMonth()+1) + '-' + n.getDate();
-}
-
+const DAILY_TASKS = ['🎬 โพสต์คลิป TikTok (17:00-20:00)','🔍 สแกนเหรียญประจำวัน','📊 เช็คโพซิชั่น + CDC ใน TradingView'];
+function todayKey() { const n = new Date(); return n.getFullYear() + '-' + (n.getMonth()+1) + '-' + n.getDate(); }
 function resetDailyIfNewDay() {
   const last = localStorage.getItem('is_lastday');
   const today = todayKey();
   if (last !== today) {
-    // ข้ามวัน: ลบทุก task ที่ติ๊กเสร็จแล้ว + ลบ daily เก่าทั้งหมด
     tasks = tasks.filter(t => !t.done && !t.daily);
-    // เติม daily ชุดใหม่ไว้บนสุด
     tasks = DAILY_TASKS.map(text => ({text, done: false, daily: true})).concat(tasks);
     saveTasks();
     localStorage.setItem('is_lastday', today);
   }
 }
-
 function saveTasks() { localStorage.setItem('is_tasks', JSON.stringify(tasks)); }
 function renderTasks() {
   const list = document.getElementById('task-list');
   const pending = tasks.filter(t => !t.done).length;
   document.getElementById('task-count').textContent = pending + ' ค้าง';
-  if (!tasks.length) {
-    list.innerHTML = '<div style="font-size:13px;color:var(--tx3);padding:8px 0;">ว่างเลย เพิ่มด้านล่างครับ</div>';
-    return;
-  }
+  if (!tasks.length) { list.innerHTML = '<div style="font-size:13px;color:var(--tx3);padding:8px 0;">ว่างเลย เพิ่มด้านล่างครับ</div>'; return; }
   list.innerHTML = tasks.map((t, i) => `
     <div class="task-item">
       <button class="task-cb${t.done ? ' done' : ''}" onclick="toggleTask(${i})">${t.done ? '✓' : ''}</button>
@@ -465,33 +344,21 @@ function addTask(txt) {
 }
 function toggleTask(i) { tasks[i].done = !tasks[i].done; saveTasks(); renderTasks(); }
 function delTask(i) { tasks.splice(i, 1); saveTasks(); renderTasks(); }
-
-// Migration: remove old-version seeded tasks (no daily flag) that duplicate daily tasks
 if (!localStorage.getItem('is_migrated_v2')) {
   tasks = tasks.filter(t => !(t.text.includes('โพสต์คลิป TikTok') || t.text.includes('สแกนเหรียญ') || t.text.includes('เช็ค CDC')));
   saveTasks();
   localStorage.setItem('is_migrated_v2', '1');
-  localStorage.removeItem('is_lastday'); // force daily seed
+  localStorage.removeItem('is_lastday');
 }
-
-// Run daily reset check on load
 resetDailyIfNewDay();
 
-// ===== TRADE PLANS (multi-card) =====
-function getPlans() {
-  return JSON.parse(localStorage.getItem('is_plans') || '[]');
-}
-function setPlans(plans) {
-  localStorage.setItem('is_plans', JSON.stringify(plans));
-}
+function getPlans() { return JSON.parse(localStorage.getItem('is_plans') || '[]'); }
+function setPlans(plans) { localStorage.setItem('is_plans', JSON.stringify(plans)); }
 let planTimer = null;
 function renderPlans() {
   const plans = getPlans();
   const list = document.getElementById('plan-list');
-  if (!plans.length) {
-    list.innerHTML = '<div style="font-size:13px;color:var(--tx3);padding:8px 0;">ยังไม่มีแผน กด + เพิ่มแผนใหม่</div>';
-    return;
-  }
+  if (!plans.length) { list.innerHTML = '<div style="font-size:13px;color:var(--tx3);padding:8px 0;">ยังไม่มีแผน กด + เพิ่มแผนใหม่</div>'; return; }
   list.innerHTML = plans.map((p, i) => `
     <div style="background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:10px;margin-bottom:10px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -501,12 +368,7 @@ function renderPlans() {
       <textarea class="tp-body" style="min-height:130px;" oninput="savePlan(${i}, this.value)" placeholder="SYMBOL — Entry Plan&#10;├ เข้า: ...&#10;├ SL: ...&#10;└ TP: ...">${p.text.replace(/</g,'&lt;')}</textarea>
     </div>`).join('');
 }
-function addPlan() {
-  const plans = getPlans();
-  plans.push({text: '', created: Date.now()});
-  setPlans(plans);
-  renderPlans();
-}
+function addPlan() { const plans = getPlans(); plans.push({text: '', created: Date.now()}); setPlans(plans); renderPlans(); }
 function savePlan(i, val) {
   clearTimeout(planTimer);
   planTimer = setTimeout(() => {
@@ -528,7 +390,6 @@ function donePlan(i) {
   updatePosition();
 }
 function loadTradePlan() {
-  // migrate old single plan → first card
   const old = localStorage.getItem('is_tradeplan2') || localStorage.getItem('is_tradeplan');
   if (old && old.trim() && !localStorage.getItem('is_plans_migrated')) {
     const plans = getPlans();
@@ -540,7 +401,6 @@ function loadTradePlan() {
   updatePosition();
 }
 
-// ===== INCOME =====
 function renderIncome() {
   document.getElementById('i-tiktok').textContent = '฿' + income.tiktok.toLocaleString();
   const tr = document.getElementById('i-trade');
@@ -560,7 +420,6 @@ function addIncome() {
   renderIncome();
 }
 
-// ===== KEY =====
 function saveKey() {
   const k = document.getElementById('key-in').value.trim();
   if (!k.startsWith('sk-ant')) { alert('Key ไม่ถูกต้องครับ'); return; }
@@ -569,9 +428,6 @@ function saveKey() {
   document.getElementById('scan-key-hint').style.display = 'none';
 }
 
-// ===== SCAN (CDC จริง: คำนวณ EMA12/26 ในเครื่อง ฟรี → ส่งเฉพาะตัวที่ผ่านให้ AI ~1฿) =====
-
-// fetch CoinGecko พร้อม retry/backoff กัน rate limit
 async function cgFetch(url, tries) {
   tries = tries || 3;
   for (let t = 0; t < tries; t++) {
@@ -580,15 +436,10 @@ async function cgFetch(url, tries) {
       if (r.ok) return r;
       if (r.status === 429) { await new Promise(x => setTimeout(x, 4000 * (t+1))); continue; }
       return r;
-    } catch(e) {
-      // Safari โยน "Load failed" เมื่อโดนบล็อก/เน็ตสะดุด — รอแล้วลองใหม่
-      await new Promise(x => setTimeout(x, 3000 * (t+1)));
-    }
+    } catch(e) { await new Promise(x => setTimeout(x, 3000 * (t+1))); }
   }
   return null;
 }
-
-// คำนวณ EMA แบบเดียวกับ TradingView
 function calcEMA(values, period) {
   const k = 2 / (period + 1);
   let e = values.slice(0, period).reduce((a, b) => a + b, 0) / period;
@@ -597,8 +448,6 @@ function calcEMA(values, period) {
   for (let i = period; i < values.length; i++) { e = values[i] * k + e * (1 - k); out.push(e); }
   return out;
 }
-
-// สถานะ CDC จากราคาปิดรายวัน
 function cdcStatus(closes) {
   if (!closes || closes.length < 30) return null;
   const e12 = calcEMA(closes, 12);
@@ -616,15 +465,43 @@ function cdcStatus(closes) {
   if (green && barsSince <= 3) status = 'FRESH_GREEN';
   else if (green && barsSince <= 8) status = 'GREEN';
   else if (green) status = 'OLD_GREEN';
-  else if (!green && barsSince <= 3) status = 'FRESH_RED';   // เพิ่งตัดลง = โอกาส Short สด
+  else if (!green && barsSince <= 3) status = 'FRESH_RED';
   else if (!green && gap > -1 && e12[n] > e12[n-2]) status = 'NEAR_CROSS';
   else if (!green) status = 'RED';
   else status = 'RED';
   return { status, barsSince: barsSince === 999 ? null : barsSince, ema12: +e12[n].toFixed(6), ema26: +e26[n].toFixed(6), gap: +gap.toFixed(2) };
 }
 
-// ===== WEEKLY TREND FILTER (TF ใหญ่บอกทิศ TF เล็กบอกจังหวะ) =====
-// ย่อ daily [[ts,price],...] เป็นราคาปิดรายสัปดาห์ (ISO week จันทร์-อาทิตย์)
+// ===== ATR (ประมาณจากราคาปิด — CoinGecko ไม่ให้ high/low ในชุดนี้) =====
+function calcATR(closes, period) {
+  period = period || 14;
+  if (!closes || closes.length < period + 1) return null;
+  const seg = closes.slice(-(period + 1));
+  let sum = 0;
+  for (let i = 1; i < seg.length; i++) sum += Math.abs(seg[i] - seg[i-1]);
+  return (sum / period) * 1.4;
+}
+// ===== ระดับเข้า 2 ไม้ + SL/TP อิง ATR =====
+function buildLevels(price, atr, ema12, ema26, status) {
+  if (!atr || !price) return null;
+  const short = (status === 'FRESH_RED' || status === 'RED');
+  const s = short ? -1 : 1;
+  const e1 = price - s * (0.3 * atr);
+  const e2 = price + s * (0.5 * atr);
+  const avg = (e1 + e2) / 2;
+  const structural = short ? Math.max(ema26, price) + 1.2 * atr : Math.min(ema26, price) - 1.2 * atr;
+  const capped = avg - s * (2.5 * atr);
+  const sl = short ? Math.min(structural, capped) : Math.max(structural, capped);
+  const risk = Math.abs(avg - sl);
+  return {
+    entry1: +e1.toPrecision(6), entry2: +e2.toPrecision(6), sl: +sl.toPrecision(6),
+    tp1: +(avg + s * 1.8 * risk).toPrecision(6), tp2: +(avg + s * 3.0 * risk).toPrecision(6),
+    be: +avg.toPrecision(6), rr1: 1.8, rr2: 3.0,
+    atr: +atr.toPrecision(4), atr_pct: +((atr / price) * 100).toFixed(2),
+    direction: short ? 'SHORT' : 'LONG'
+  };
+}
+
 function toWeeklyCloses(pricePairs) {
   if (!pricePairs || !pricePairs.length) return [];
   const weeks = new Map();
@@ -639,8 +516,6 @@ function toWeeklyCloses(pricePairs) {
   }
   return Array.from(weeks.values());
 }
-
-// เทรนด์ weekly จาก EMA12/26 บนแท่งสัปดาห์ — ต้องมีข้อมูล daily >= ~280 วัน (40 สัปดาห์)
 function weeklyTrend(pricePairs) {
   const wk = toWeeklyCloses(pricePairs);
   if (wk.length < 40) return { status: 'INSUFFICIENT_DATA', weeks: wk.length };
@@ -649,34 +524,18 @@ function weeklyTrend(pricePairs) {
   const status = e12[n] > e26[n] ? 'GREEN' : 'RED';
   const gap = +(((e12[n] - e26[n]) / e26[n]) * 100).toFixed(2);
   let barsSince = 0;
-  for (let i = n; i >= 26; i--) {
-    if ((e12[i] > e26[i]) === (status === 'GREEN')) barsSince = n - i; else break;
-  }
+  for (let i = n; i >= 26; i--) { if ((e12[i] > e26[i]) === (status === 'GREEN')) barsSince = n - i; else break; }
   return { status, gap, barsSince };
 }
-
-// รวม daily signal + weekly trend → ป้ายกำกับ + ตัวคูณขนาดไม้
 function classifyTrend(dailyStatus, wk) {
   const dailyBull = dailyStatus === 'FRESH_GREEN' || dailyStatus === 'GREEN' || dailyStatus === 'NEAR_CROSS';
-  if (!wk || wk.status === 'INSUFFICIENT_DATA') {
-    return { tag: 'UNKNOWN_TREND', sizeFactor: 0.5, note: 'ข้อมูล weekly ไม่พอ (เหรียญใหม่) — ไม้ครึ่งเดียว' };
-  }
-  if (dailyBull && wk.status === 'GREEN') {
-    return { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly เขียวด้วย (ยืนมา ' + wk.barsSince + ' สัปดาห์) — เทรนด์ใหญ่หนุน ถือตามแผนได้' };
-  }
-  if (dailyBull && wk.status === 'RED') {
-    return { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เขียวแต่ Weekly ยังแดง (gap ' + wk.gap + '%) — แค่เด้งสวนเทรนด์ใหญ่ ไม้ครึ่งเดียว TP ใกล้ลง ออกไว' };
-  }
-  if (dailyStatus === 'FRESH_RED' && wk.status === 'RED') {
-    return { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly แดงด้วย — Short สอดคล้องเทรนด์ใหญ่' };
-  }
-  if (dailyStatus === 'FRESH_RED' && wk.status === 'GREEN') {
-    return { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เพิ่งตัดลงแต่ Weekly ยังเขียว — Short สวนเทรนด์ใหญ่ ไม้ครึ่งเดียว ออกไว' };
-  }
+  if (!wk || wk.status === 'INSUFFICIENT_DATA') return { tag: 'UNKNOWN_TREND', sizeFactor: 0.5, note: 'ข้อมูล weekly ไม่พอ (เหรียญใหม่) — ไม้ครึ่งเดียว' };
+  if (dailyBull && wk.status === 'GREEN') return { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly เขียวด้วย (ยืนมา ' + wk.barsSince + ' สัปดาห์) — เทรนด์ใหญ่หนุน ถือตามแผนได้' };
+  if (dailyBull && wk.status === 'RED') return { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เขียวแต่ Weekly ยังแดง (gap ' + wk.gap + '%) — แค่เด้งสวนเทรนด์ใหญ่ ไม้ครึ่งเดียว TP ใกล้ลง ออกไว' };
+  if (dailyStatus === 'FRESH_RED' && wk.status === 'RED') return { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly แดงด้วย — Short สอดคล้องเทรนด์ใหญ่' };
+  if (dailyStatus === 'FRESH_RED' && wk.status === 'GREEN') return { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เพิงตัดลงแต่ Weekly ยังเขียว — Short สวนเทรนด์ใหญ่ ไม้ครึ่งเดียว ออกไว' };
   return { tag: 'NEUTRAL', sizeFactor: 1.0, note: '' };
 }
-
-// format ราคาให้ถูกทุกช่วง (แก้บั๊กเหรียญจิ๋วแบบ PEPE โชว์ $0.0000)
 function fmtPrice(n) {
   if (n == null || isNaN(n)) return '—';
   const v = Number(n);
@@ -686,12 +545,25 @@ function fmtPrice(n) {
   return '$' + v.toFixed(Math.min(12, Math.ceil(-Math.log10(v)) + 3)).replace(/0+$/, '');
 }
 
+// แสดงแผนเข้า 2 ไม้ (ใช้ร่วมกันทั้งเหรียญและทอง)
+function levelBlock(lv, isShort, fmt) {
+  fmt = fmt || fmtPrice;
+  if (!lv) return '';
+  return `
+<div style="background:var(--bg2);border:1px solid var(--br);border-radius:var(--rs);padding:10px;margin-bottom:8px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.85;">
+<div style="font-family:'Inter',sans-serif;font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--tx3);margin-bottom:6px;">แผนเข้า 2 ไม้ · ATR ${lv.atr_pct}%</div>
+<div><span style="color:var(--amb);">ไม้ 1 (50%)</span> ${fmt(lv.entry1)} <span style="color:var(--tx3);font-size:11px;">— ยังไม่ยืนยัน</span></div>
+<div><span style="color:var(--gd);">ไม้ 2 (50%)</span> ${fmt(lv.entry2)} <span style="color:var(--tx3);font-size:11px;">— เมื่อปิดแท่ง${isShort?'ต่ำกว่า':'เหนือ'} EMA12</span></div>
+<div style="border-top:1px solid var(--br);margin-top:6px;padding-top:6px;">
+<span style="color:var(--red);">SL ${fmt(lv.sl)}</span> · <span style="color:#AFA9EC;">TP1 ${fmt(lv.tp1)}</span> <span style="color:var(--tx3);font-size:11px;">ปิดครึ่ง RR ${lv.rr1}</span> · <span style="color:#AFA9EC;">TP2 ${fmt(lv.tp2)}</span>
+</div>
+<div style="color:var(--tx3);font-size:11px;">ถึง TP1 → เลื่อน SL มาที่ ${fmt(lv.be)} (เท่าทุน) ที่เหลือปล่อยวิ่ง</div>
+</div>`;
+}
+</script>
+<script>
 async function scanCoins() {
-  if (!apiKey) {
-    document.getElementById('scan-key-hint').style.display = 'block';
-    return;
-  }
-  // cooldown 90 วิ กัน CoinGecko rate limit
+  if (!apiKey) { document.getElementById('scan-key-hint').style.display = 'block'; return; }
   const lastScan = +(localStorage.getItem('is_last_scan_ts') || 0);
   const waitLeft = Math.ceil((90000 - (Date.now() - lastScan)) / 1000);
   if (waitLeft > 0) {
@@ -709,9 +581,7 @@ async function scanCoins() {
   el('scan-loading').style.display = 'block';
   setLoad('ดึงข้อมูลตลาดสด...');
   el('scan-btn').disabled = true;
-
   try {
-    // STEP 1 (ฟรี): เหรียญอันดับ 20-150 กรอง momentum + volume
     const mr = await cgFetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=150&page=1&price_change_percentage=24h%2C7d');
     if (!mr || !mr.ok) throw new Error('CoinGecko จำกัดความถี่ชั่วคราว — รอ 1-2 นาทีแล้วกดสแกนใหม่ครับ');
     const all = await mr.json();
@@ -719,19 +589,13 @@ async function scanCoins() {
     const candidates = all
       .filter(c => (c.market_cap_rank || 999) >= 20)
       .filter(c => !SKIP.includes((c.symbol||'').toLowerCase()))
-      .filter(c => {
-        const d7 = c.price_change_percentage_7d_in_currency || 0;
-        // เปิดกว้างขึ้นทั้งสองทาง: กันดอยฝั่ง Long (+50%) และกันไล่ short ตัวที่ดิ่งไปแล้วลึกเกิน (-30%)
-        return d7 > -30 && d7 < 50;
-      })
+      .filter(c => { const d7 = c.price_change_percentage_7d_in_currency || 0; return d7 > -30 && d7 < 50; })
       .sort((a, b) => (b.total_volume / b.market_cap) - (a.total_volume / a.market_cap))
       .slice(0, 15);
-
     if (!candidates.length) throw new Error('วันนี้ไม่มีเหรียญเข้าเงื่อนไข ลองพรุ่งนี้ครับ');
 
-    // ทองก่อนเลย (กัน rate limit ตอนท้าย): คำนวณ CDC จริงจากราคาปิด 60 วัน
     setLoad('วิเคราะห์ทองคำก่อน...');
-    let goldCloses = null, goldCur = null, goldCdc = null, goldWeekly = null;
+    let goldCloses = null, goldCur = null, goldCdc = null, goldWeekly = null, goldLevels = null;
     try {
       const ghr = await cgFetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=365&interval=daily');
       if (ghr && ghr.ok) {
@@ -740,11 +604,11 @@ async function scanCoins() {
         goldCur = +goldCloses[goldCloses.length-1].toFixed(1);
         goldCdc = cdcStatus(goldCloses);
         goldWeekly = weeklyTrend(ghd.prices);
+        if (goldCdc) goldLevels = buildLevels(goldCur, calcATR(goldCloses, 14), goldCdc.ema12, goldCdc.ema26, goldCdc.status);
       }
     } catch(e) {}
     await new Promise(r => setTimeout(r, 1500));
 
-    // 🚦 BTC Market Filter: เช็ค CDC ของ BTC ก่อน (กระแสน้ำใหญ่)
     setLoad('เช็คสภาพตลาดใหญ่ (BTC)...');
     let btcCdc = null, btcWeekly = null;
     try {
@@ -758,7 +622,6 @@ async function scanCoins() {
     } catch(e) {}
     await new Promise(r => setTimeout(r, 1500));
 
-    // STEP 2 (ฟรี): ดึงกราฟ 60 วันทีละเหรียญ → คำนวณ CDC จริงในเครื่อง
     const analyzed = [];
     for (let i = 0; i < candidates.length; i++) {
       const c = candidates[i];
@@ -771,22 +634,18 @@ async function scanCoins() {
           const cdc = cdcStatus(closes);
           const wk = cdc ? weeklyTrend(hd.prices) : null;
           const trend = cdc ? classifyTrend(cdc.status, wk) : null;
-          // volume confirmation: แท่งล่าสุดเทียบค่าเฉลี่ย 20 วัน
+          const atr14 = calcATR(closes, 14);
+          const lv = cdc ? buildLevels(c.current_price, atr14, cdc.ema12, cdc.ema26, cdc.status) : null;
           let volConfirm = null;
           try {
             const vols = (hd.total_volumes || []).map(v => v[1]);
-            if (vols.length > 21) {
-              const last = vols[vols.length-1];
-              const avg20 = vols.slice(-21, -1).reduce((a,b)=>a+b,0) / 20;
-              volConfirm = +((last / avg20)).toFixed(2); // >1 = volume สูงกว่าค่าเฉลี่ย
-            }
+            if (vols.length > 21) { const last = vols[vols.length-1]; const avg20 = vols.slice(-21, -1).reduce((a,b)=>a+b,0) / 20; volConfirm = +((last / avg20)).toFixed(2); }
           } catch(ve) {}
           if (cdc) {
             window._cgMap = window._cgMap || {};
             window._cgMap[(c.symbol||'').toUpperCase()] = { id: c.id, price: closes[closes.length-1] };
             analyzed.push({
-              symbol: (c.symbol||'').toUpperCase(), name: c.name, rank: c.market_cap_rank,
-              price: c.current_price,
+              symbol: (c.symbol||'').toUpperCase(), name: c.name, rank: c.market_cap_rank, price: c.current_price,
               chg24h: +(c.price_change_percentage_24h_in_currency || 0).toFixed(2),
               chg7d: +(c.price_change_percentage_7d_in_currency || 0).toFixed(2),
               vol_mcap: +((c.total_volume / c.market_cap) * 100).toFixed(1),
@@ -795,59 +654,47 @@ async function scanCoins() {
               ema12: cdc.ema12, ema26: cdc.ema26, ema_gap_pct: cdc.gap,
               vol_confirm: volConfirm,
               dist_ema12_pct: +(((c.current_price - cdc.ema12) / cdc.ema12) * 100).toFixed(1),
-              weekly_status: wk ? wk.status : null,
-              weekly_gap_pct: wk && wk.gap != null ? wk.gap : null,
-              trend_tag: trend ? trend.tag : null
+              weekly_status: wk ? wk.status : null, weekly_gap_pct: wk && wk.gap != null ? wk.gap : null,
+              trend_tag: trend ? trend.tag : null, atr_pct: lv ? lv.atr_pct : null, plan: lv
             });
             window._trendMap = window._trendMap || {};
             window._trendMap[(c.symbol||'').toUpperCase()] = trend;
+            window._lvMap = window._lvMap || {};
+            if (lv) window._lvMap[(c.symbol||'').toUpperCase()] = lv;
           }
         }
       } catch(e) {}
       await new Promise(r => setTimeout(r, 1300));
     }
 
-    const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1}; // Long: เอาเฉพาะของสด — ตัด GREEN 4+ แท่ง (บทเรียน SUN)
-    const qualified = analyzed
-      .filter(c => c.cdc_status in RANKED)
-      .sort((a, b) => RANKED[a.cdc_status] - RANKED[b.cdc_status] || b.vol_mcap - a.vol_mcap)
-      .slice(0, 4);
-
-    // Short: เอาเฉพาะ FRESH_RED (เพิ่งตัดลง 1-3 แท่ง) — โอกาสตอนตลาดขาลง
-    const qualifiedShort = analyzed
-      .filter(c => c.cdc_status === 'FRESH_RED')
-      .sort((a, b) => b.vol_mcap - a.vol_mcap)
-      .slice(0, 2);
-
+    const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1};
+    const qualified = analyzed.filter(c => c.cdc_status in RANKED).sort((a, b) => RANKED[a.cdc_status] - RANKED[b.cdc_status] || b.vol_mcap - a.vol_mcap).slice(0, 4);
+    const qualifiedShort = analyzed.filter(c => c.cdc_status === 'FRESH_RED').sort((a, b) => b.vol_mcap - a.vol_mcap).slice(0, 2);
     if (!qualified.length && !qualifiedShort.length && !goldCdc) throw new Error('วันนี้ไม่มีเหรียญ CDC เขียวสดหรือแดงสดเลย — ' + (btcCdc && btcCdc.status === 'RED' ? 'BTC เองก็ยังแดง ' : '') + 'ถือเงินสดรอคือ position ที่ถูกต้องครับ');
 
     setLoad('Rex กำลังสรุปแผน...');
-    const goldStatusTH = goldCdc ? (goldCdc.status==='RED'?'แดง':goldCdc.status==='NEAR_CROSS'?'รอยืนยัน':'เขียว') : 'รอยืนยัน';
+    const goldStatusTH = goldCdc ? (goldCdc.status==='RED'||goldCdc.status==='FRESH_RED'?'แดง':goldCdc.status==='NEAR_CROSS'?'รอยืนยัน':'เขียว') : 'รอยืนยัน';
     const prompt = 'คุณคือ Rex นักวิเคราะห์ CDC ActionZone ของคุณออยล์ วิเคราะห์ทั้งฝั่ง Long และ Short\n' +
-      'ระบบคำนวณ EMA12/26 จากราคาปิดจริง 60 วันแล้ว\n' +
-      'ผู้สมัครฝั่ง LONG (CDC เขียวสด/ใกล้ตัดขึ้น):\n' + JSON.stringify(qualified) + '\n' +
-      'ผู้สมัครฝั่ง SHORT (CDC เพิ่งตัดลง 1-3 แท่ง = FRESH_RED):\n' + JSON.stringify(qualifiedShort) + '\n' +
-      'ความหมาย cdc_status: FRESH_GREEN=เพิ่งตัดขึ้น 1-3 แท่ง (ดีสุดสำหรับ Long), NEAR_CROSS=EMA12 ใกล้ตัด (รอยืนยัน), FRESH_RED=เพิ่งตัดลง 1-3 แท่ง (ดีสุดสำหรับ Short)\n' +
+      'ระบบคำนวณ EMA12/26 + ATR + โซนเข้า/SL/TP จากราคาปิดจริงแล้ว\n' +
+      'ผู้สมัครฝั่ง LONG:\n' + JSON.stringify(qualified) + '\n' +
+      'ผู้สมัครฝั่ง SHORT (FRESH_RED):\n' + JSON.stringify(qualifiedShort) + '\n' +
+      'ความหมาย cdc_status: FRESH_GREEN=เพิ่งตัดขึ้น 1-3 แท่ง (ดีสุด Long), NEAR_CROSS=ใกล้ตัด (รอยืนยัน), FRESH_RED=เพิ่งตัดลง 1-3 แท่ง (ดีสุด Short)\n' +
       'สภาพตลาดใหญ่ BTC CDC: ' + (btcCdc ? JSON.stringify(btcCdc) : 'ไม่มีข้อมูล') + '\n' +
-      'กติกาเพิ่ม: ถ้า vol_confirm < 1 ให้ระบุใน risk ว่า volume ไม่ยืนยัน | ถ้า dist_ema12_pct > 8 (Long) หรือ < -8 (Short) ให้แนะนำรอ pullback แทนการเข้าทันที | ถ้า BTC เป็น RED ให้บอกใน summary ว่าฝั่ง Long ควรลดไม้ครึ่งหนึ่งหรืองด แต่ฝั่ง Short เข้าได้ตามปกติเพราะสอดคล้องทิศทางตลาดใหญ่ | ถ้า BTC เป็น GREEN ให้กลับกัน คือ Short ควรระวัง\n' +
-      'กติกา Multi-Timeframe: แต่ละเหรียญมี trend_tag จาก weekly EMA12/26 — WITH_TREND=weekly หนุน daily (สัญญาณคุณภาพสูง ถือได้ยาว ให้คะแนนสูงกว่า), COUNTER_TREND=daily สวน weekly (แค่เด้งสวนเทรนด์ใหญ่ ให้ระบุใน risk ว่าไม้ครึ่งเดียว TP ใกล้ลง ออกไว), UNKNOWN_TREND=เหรียญใหม่ข้อมูลไม่พอ (ไม้ครึ่งเดียว) | ถ้าเลือกได้ให้เลือก WITH_TREND ก่อน COUNTER_TREND เสมอ\n' +
-      'กติกา RR: ทุกตัวที่เลือก (TP1-entry_high)/(entry_high-SL) ต้อง >= 1.5 สำหรับ Long และ (entry_low-TP1)/(SL-entry_low) >= 1.5 สำหรับ Short — ถ้าไม่ถึงให้ปรับโซนหรือตัดตัวนั้นทิ้ง อย่าฝืนเสนอ\n' +
-      (goldCdc ? ('ทองคำ XAU ราคา $' + goldCur + ' CDC จริง: ' + JSON.stringify(goldCdc) + (goldWeekly ? ' Weekly: ' + JSON.stringify(goldWeekly) : '') + ' ราคาปิด 5 วันล่าสุด: ' + JSON.stringify(goldCloses.slice(-5).map(v=>+v.toFixed(1))) + '\n') : '') +
-      'เลือกเหรียญ Long ดีที่สุดไม่เกิน 3 ตัว จากผู้สมัคร Long, เลือก Short ดีที่สุดไม่เกิน 2 ตัวจากผู้สมัคร Short (ถ้ามี)\n' +
-      'Long: entry ใกล้ราคาปัจจุบัน/pullback สั้น, SL ใต้ low24h/EMA26, TP1 +10-20%\n' +
-      'Short: entry ใกล้ราคาปัจจุบัน/รีบาวด์สั้น, SL เหนือ high24h/EMA26, TP1 -10-20%\n' +
-      'ทองก็เช่นกัน ให้โซนเข้า/SL/TP ที่สมเหตุสมผลกับราคาปัจจุบัน (ระบุทิศทางที่เหมาะใน cdc)\n' +
+      'สำคัญ: ระบบคำนวณ entry/SL/TP ให้แล้วในฟิลด์ plan ของแต่ละเหรียญ (อิง ATR14, RR 1.8, เข้า 2 ไม้) ห้ามคิดเลขเอง ห้ามแก้ตัวเลข — ในคำตอบใส่ entry_low=plan.entry1, entry_high=plan.entry2, sl=plan.sl, tp1=plan.tp1 ตรงๆ หน้าที่คุณคือเขียน reason กับ risk ภาษาไทยเท่านั้น\n' +
+      'แผนเข้า 2 ไม้: ไม้ 1 ครึ่งเดียวตอนสัญญาณยังไม่ยืนยัน ไม้ 2 อีกครึ่งเมื่อยืนยัน — อธิบายใน reason ว่าจุดยืนยันคืออะไร (เช่น ปิดแท่งเหนือ EMA12 / EMA12 ตัดขึ้น 26 จริง)\n' +
+      'ถ้า atr_pct > 12 เตือนใน risk ว่าเหรียญผันผวนสูงมาก ควรลดขนาดไม้ลงอีกครึ่ง\n' +
+      'กติกาเพิ่ม: ถ้า vol_confirm < 1 ระบุใน risk ว่า volume ไม่ยืนยัน | ถ้า BTC RED ให้บอกใน summary ว่าฝั่ง Long ควรลดไม้/งด แต่ Short เข้าได้ | ถ้า BTC GREEN กลับกัน\n' +
+      'กติกา Multi-Timeframe: trend_tag WITH_TREND=weekly หนุน (คุณภาพสูง), COUNTER_TREND=สวนเทรนด์ (ระบุ risk ว่าไม้ครึ่งเดียว ออกไว), UNKNOWN_TREND=ข้อมูลไม่พอ | เลือก WITH_TREND ก่อน\n' +
+      (goldCdc ? ('ทองคำ XAU ราคา $' + goldCur + ' CDC: ' + JSON.stringify(goldCdc) + (goldLevels ? ' plan(ระบบคำนวณแล้ว ห้ามแก้): ' + JSON.stringify(goldLevels) : '') + '\n') : '') +
+      'เลือก Long ดีสุดไม่เกิน 3 ตัว, Short ดีสุดไม่เกิน 2 ตัว\n' +
+      'ทอง: ใช้ตัวเลขจาก gold plan ที่ระบบให้ (entry_low=entry1, entry_high=entry2, sl=sl, tp1=tp1) เขียนแค่ summary กับ risk\n' +
       'ตอบ JSON เท่านั้น ไม่มี markdown:\n' +
-      '{"summary":"ภาพรวม ไทย 1-2 ประโยค","gold":{"cdc":"' + goldStatusTH + '","summary":"เทรนด์ทอง+คำแนะนำ ไทย 2 ประโยค","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"risk":"ไทย 1 ประโยค"},"coins":[{"symbol":"TICKER","name":"ชื่อ + อันดับ + สถานะ CDC ภาษาไทย","price":"$ราคา","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"reason":"เหตุผล CDC จากตัวเลขจริง ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"}],"coins_short":[{"symbol":"TICKER","name":"ชื่อ + อันดับ + สถานะ CDC ภาษาไทย","price":"$ราคา","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"reason":"เหตุผล CDC ฝั่ง Short จากตัวเลขจริง ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"}]}';
+      '{"summary":"ภาพรวม ไทย 1-2 ประโยค","gold":{"cdc":"' + goldStatusTH + '","summary":"เทรนด์ทอง+คำแนะนำ ไทย 2 ประโยค","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"risk":"ไทย 1 ประโยค"},"coins":[{"symbol":"TICKER","name":"ชื่อ + อันดับ + สถานะ CDC ไทย","price":"$ราคา","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"reason":"เหตุผล CDC จากตัวเลขจริง ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"}],"coins_short":[{"symbol":"TICKER","name":"ชื่อ + อันดับ + สถานะ CDC ไทย","price":"$ราคา","entry_low":number,"entry_high":number,"sl":number,"tp1":number,"reason":"เหตุผล Short ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"}]}';
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1500,
-        messages: [{role:'user', content:prompt}]
-      })
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1500, messages: [{role:'user', content:prompt}] })
     });
     if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || 'API ' + res.status); }
     const data = await res.json();
@@ -870,12 +717,14 @@ async function scanCoins() {
     if (!parsed.coins || !Array.isArray(parsed.coins)) throw new Error('รูปแบบข้อมูลผิด กดสแกนใหม่');
     parsed.btc = btcCdc || null;
     parsed._trend = window._trendMap || {};
+    parsed._lv = window._lvMap || {};
+    if (goldLevels) parsed._goldLv = goldLevels;
     const scanData = {result: parsed, time: new Date().toISOString()};
-    try { await window.storage.set('is_scan_result', JSON.stringify(scanData)); } catch(e) {}
+    try { localStorage.setItem('is_scan_result', JSON.stringify(scanData)); } catch(e) {}
     renderScan(parsed, new Date());
     if (parsed.gold && goldCur) {
-      try { await window.storage.set('is_gold_result', JSON.stringify({result: parsed.gold, cur: goldCur, time: new Date().toISOString()})); } catch(e) {}
-      renderGold(parsed.gold, goldCur, new Date());
+      try { localStorage.setItem('is_gold_result', JSON.stringify({result: parsed.gold, cur: goldCur, lv: goldLevels, time: new Date().toISOString()})); } catch(e) {}
+      renderGold(parsed.gold, goldCur, new Date(), goldLevels, goldCdc);
     }
     const si = tasks.findIndex(t => t.text.includes('สแกนเหรียญ') && !t.done);
     if (si >= 0) { tasks[si].done = true; saveTasks(); renderTasks(); }
@@ -890,7 +739,7 @@ async function scanCoins() {
 
 function renderScan(parsed, dt) {
   document.getElementById('scan-loading').style.display = 'none';
-  // 🚦 BTC market banner
+  window._lvMap = parsed._lv || window._lvMap || {};
   const oldB = document.getElementById('btc-banner'); if (oldB) oldB.remove();
   if (parsed.btc) {
     const s = parsed.btc.status;
@@ -908,11 +757,7 @@ function renderScan(parsed, dt) {
     const sc = document.getElementById('scan-summary');
     sc.parentNode.insertBefore(b, sc);
   }
-  if (parsed.summary) {
-    const s = document.getElementById('scan-summary');
-    s.style.display = 'block';
-    s.textContent = '📊 ' + parsed.summary;
-  }
+  if (parsed.summary) { const s = document.getElementById('scan-summary'); s.style.display = 'block'; s.textContent = '📊 ' + parsed.summary; }
   const trendMap = parsed._trend || window._trendMap || {};
   const trendBadge = sym => {
     const t = trendMap[(sym||'').toUpperCase()];
@@ -921,9 +766,8 @@ function renderScan(parsed, dt) {
     if (t.tag === 'COUNTER_TREND') return '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px;font-size:12px;color:var(--amb);font-weight:600;">🔀 ' + t.note + '</div>';
     return '<div style="background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px;font-size:12px;color:var(--tx2);font-weight:600;">❓ ' + t.note + '</div>';
   };
-  document.getElementById('coin-list').innerHTML = parsed.coins.map((c, i) => {
-    const fmt = fmtPrice;
-    return `
+  const lvOf = sym => (window._lvMap || {})[(sym||'').split(/[\s—(]/)[0].trim().toUpperCase()];
+  document.getElementById('coin-list').innerHTML = parsed.coins.map((c, i) => `
     <div class="coin-card">
       <div class="coin-head">
         <div class="coin-av">${(c.symbol||'?').substring(0,4)}</div>
@@ -932,24 +776,15 @@ function renderScan(parsed, dt) {
       </div>
       ${trendBadge(c.symbol)}
       <div id="verdict-${i}"></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;font-family:'JetBrains Mono',monospace;">
-        <span style="background:var(--gl);color:var(--gd);border:1px solid var(--gm);border-radius:6px;padding:3px 8px;">เข้า ${fmt(c.entry_low)}–${fmt(c.entry_high)}</span>
-        <span style="background:var(--rl);color:var(--red);border:1px solid rgba(226,75,74,.3);border-radius:6px;padding:3px 8px;">SL ${fmt(c.sl)}</span>
-        <span style="background:var(--pubg);color:#AFA9EC;border:1px solid rgba(127,119,221,.3);border-radius:6px;padding:3px 8px;">TP ${fmt(c.tp1)}</span>
-      </div>
+      ${levelBlock(lvOf(c.symbol), false) || `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;font-family:'JetBrains Mono',monospace;"><span style="background:var(--gl);color:var(--gd);border:1px solid var(--gm);border-radius:6px;padding:3px 8px;">เข้า ${fmtPrice(c.entry_low)}–${fmtPrice(c.entry_high)}</span><span style="background:var(--rl);color:var(--red);border:1px solid rgba(226,75,74,.3);border-radius:6px;padding:3px 8px;">SL ${fmtPrice(c.sl)}</span><span style="background:var(--pubg);color:#AFA9EC;border:1px solid rgba(127,119,221,.3);border-radius:6px;padding:3px 8px;">TP ${fmtPrice(c.tp1)}</span></div>`}
       <div class="coin-sec"><span class="coin-label">เหตุผล + CDC</span>${c.reason||'—'}</div>
       <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
-    </div>`;
-  }).join('');
-
-  // ===== SHORT SECTION =====
+    </div>`).join('');
   const shortCoins = parsed.coins_short || [];
   const shortWrap = document.getElementById('short-section');
   if (shortCoins.length) {
     shortWrap.style.display = 'block';
-    document.getElementById('short-list').innerHTML = shortCoins.map((c, i) => {
-      const fmt = fmtPrice;
-      return `
+    document.getElementById('short-list').innerHTML = shortCoins.map((c, i) => `
       <div class="coin-card" style="border-color:rgba(226,75,74,.3);">
         <div class="coin-head">
           <div class="coin-av" style="background:rgba(226,75,74,.15);border-color:rgba(226,75,74,.3);color:var(--red);">${(c.symbol||'?').substring(0,4)}</div>
@@ -958,30 +793,18 @@ function renderScan(parsed, dt) {
         </div>
         ${trendBadge(c.symbol)}
         <div id="verdict-s${i}"></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;font-family:'JetBrains Mono',monospace;">
-          <span style="background:rgba(226,75,74,.12);color:var(--red);border:1px solid rgba(226,75,74,.3);border-radius:6px;padding:3px 8px;">เข้า Short ${fmt(c.entry_low)}–${fmt(c.entry_high)}</span>
-          <span style="background:var(--gl);color:var(--gd);border:1px solid var(--gm);border-radius:6px;padding:3px 8px;">SL ${fmt(c.sl)}</span>
-          <span style="background:var(--pubg);color:#AFA9EC;border:1px solid rgba(127,119,221,.3);border-radius:6px;padding:3px 8px;">TP ${fmt(c.tp1)}</span>
-        </div>
+        ${levelBlock(lvOf(c.symbol), true) || `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;font-family:'JetBrains Mono',monospace;"><span style="background:rgba(226,75,74,.12);color:var(--red);border:1px solid rgba(226,75,74,.3);border-radius:6px;padding:3px 8px;">เข้า Short ${fmtPrice(c.entry_low)}–${fmtPrice(c.entry_high)}</span><span style="background:var(--gl);color:var(--gd);border:1px solid var(--gm);border-radius:6px;padding:3px 8px;">SL ${fmtPrice(c.sl)}</span><span style="background:var(--pubg);color:#AFA9EC;border:1px solid rgba(127,119,221,.3);border-radius:6px;padding:3px 8px;">TP ${fmtPrice(c.tp1)}</span></div>`}
         <div class="coin-sec"><span class="coin-label">เหตุผล + CDC</span>${c.reason||'—'}</div>
         <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
-      </div>`;
-    }).join('');
-  } else {
-    shortWrap.style.display = 'none';
-  }
-
+      </div>`).join('');
+  } else { shortWrap.style.display = 'none'; }
   document.getElementById('scan-time').textContent = (dt||new Date()).toLocaleDateString('th-TH') + ' ' + (dt||new Date()).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
   fetchLivePrices(parsed.coins, 'live-', 'verdict-', 'long');
   if (shortCoins.length) fetchLivePrices(shortCoins, 'live-s', 'verdict-s', 'short');
 }
 
-// ดึงราคาสด แล้วเทียบกับโซนเข้า → บอก action ชัดๆ (ใช้ id ที่ cache ไว้ กัน rate limit)
-// direction: 'long' หรือ 'short' — สลับ logic ตัดสินใจ
 async function fetchLivePrices(coins, pricePrefix, verdictPrefix, direction) {
-  pricePrefix = pricePrefix || 'live-';
-  verdictPrefix = verdictPrefix || 'verdict-';
-  direction = direction || 'long';
+  pricePrefix = pricePrefix || 'live-'; verdictPrefix = verdictPrefix || 'verdict-'; direction = direction || 'long';
   for (let i = 0; i < coins.length; i++) {
     const el = document.getElementById(pricePrefix + i);
     const vd = document.getElementById(verdictPrefix + i);
@@ -993,64 +816,38 @@ async function fetchLivePrices(coins, pricePrefix, verdictPrefix, direction) {
       let id = cached ? cached.id : null;
       if (!id) {
         const sr = await fetch('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(ticker));
-        if (sr.ok) {
-          const sd = await sr.json();
-          const hit = (sd.coins || []).find(c => c.symbol.toUpperCase() === ticker) || (sd.coins || [])[0];
-          if (hit) id = hit.id;
-        }
+        if (sr.ok) { const sd = await sr.json(); const hit = (sd.coins || []).find(c => c.symbol.toUpperCase() === ticker) || (sd.coins || [])[0]; if (hit) id = hit.id; }
         await new Promise(r => setTimeout(r, 800));
       }
       if (id) {
         const pr = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=' + id + '&vs_currencies=usd&include_24hr_change=true');
-        if (pr.ok) {
-          const pd = await pr.json();
-          if (pd[id]) { price = pd[id].usd; chg = pd[id].usd_24h_change || 0; }
-        }
+        if (pr.ok) { const pd = await pr.json(); if (pd[id]) { price = pd[id].usd; chg = pd[id].usd_24h_change || 0; } }
       }
     } catch(e) {}
-    // fallback: ใช้ราคาจากตอนสแกน (สดอยู่แล้ว เพิ่งดึงเมื่อครู่)
     if (price == null && cached) { price = cached.price; chg = null; }
-    if (price == null) {
-      // ดึงจากตัวเลขที่ AI ให้มา
-      const p = parseFloat(String(coins[i].price||'').replace(/[^0-9.]/g,''));
-      if (p > 0) price = p;
-    }
+    if (price == null) { const p = parseFloat(String(coins[i].price||'').replace(/[^0-9.]/g,'')); if (p > 0) price = p; }
     if (price == null) { el.innerHTML = '<span style="color:var(--tx3);">เช็คราคาใน Bybit</span>'; continue; }
     const fmtP = fmtPrice(price);
     el.innerHTML = '<span style="color:var(--tx);font-weight:700;font-size:15px;">' + fmtP + '</span>' + (chg != null ? ' <span style="color:' + (chg >= 0 ? 'var(--gd)' : 'var(--red)') + ';">' + (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%</span>' : '');
-
-    const eLow = Number(coins[i].entry_low), eHigh = Number(coins[i].entry_high), sl = Number(coins[i].sl), tp = Number(coins[i].tp1);
+    const lv = (window._lvMap || {})[ticker];
+    const eLow = lv ? Math.min(lv.entry1, lv.entry2) : Number(coins[i].entry_low);
+    const eHigh = lv ? Math.max(lv.entry1, lv.entry2) : Number(coins[i].entry_high);
+    const sl = lv ? lv.sl : Number(coins[i].sl);
+    const tp = lv ? lv.tp1 : Number(coins[i].tp1);
     if (vd && eLow && eHigh && sl) {
       let html = '';
       if (direction === 'short') {
-        // Short: SL อยู่เหนือ entry, TP อยู่ใต้ entry — ทุกเงื่อนไขกลับด้าน
-        if (price >= sl) {
-          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">❌ ราคาสูงกว่า SL แล้ว — setup Short เสีย ไม่เข้า</div>';
-        } else if (price >= eLow && price <= eHigh) {
-          html = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้า Short พอดี — เช็ค CDC ยืนยันแล้ว Short ได้ 25% + ตั้ง SL ทันที</div>';
-        } else if (price > eHigh) {
-          const gap = ((price - eHigh) / eHigh * 100).toFixed(1);
-          html = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ราคาสูงกว่าโซนเข้า ' + gap + '% — รอรีบาวด์ลงมาโซน + CDC ยังแดงก่อน</div>';
-        } else if (tp && price <= tp) {
-          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🚫 ราคาถึง TP แล้ว — รถออกไปแล้ว ห้ามไล่ Short! รอ setup ใหม่</div>';
-        } else {
-          const under = ((eLow - price) / eLow * 100).toFixed(1);
-          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ ราคาต่ำกว่าโซนเข้าไปแล้ว ' + under + '% — อย่าไล่ Short รอรีบาวด์กลับเข้าโซนก่อน</div>';
-        }
+        if (price >= sl) html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">❌ ราคาสูงกว่า SL แล้ว — setup Short เสีย ไม่เข้า</div>';
+        else if (price >= eLow && price <= eHigh) html = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้า Short — เช็ค CDC ยืนยันแล้ว Short ไม้ 1 (ครึ่งเดียว) + ตั้ง SL ทันที</div>';
+        else if (price > eHigh) { const gap = ((price - eHigh) / eHigh * 100).toFixed(1); html = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ สูงกว่าโซนเข้า ' + gap + '% — รอรีบาวด์ลงมาโซน + CDC ยังแดงก่อน</div>'; }
+        else if (tp && price <= tp) html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🚫 ราคาถึง TP แล้ว — รถออกไปแล้ว ห้ามไล่ Short! รอ setup ใหม่</div>';
+        else { const under = ((eLow - price) / eLow * 100).toFixed(1); html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ ต่ำกว่าโซนเข้าไปแล้ว ' + under + '% — อย่าไล่ Short รอรีบาวด์กลับเข้าโซน</div>'; }
       } else {
-        if (price <= sl) {
-          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">❌ ราคาต่ำกว่า SL แล้ว — setup เสีย ไม่เข้า</div>';
-        } else if (price >= eLow && price <= eHigh) {
-          html = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้าพอดี — เช็ค CDC ใน TradingView แล้วเข้าได้ 25% + ตั้ง SL ทันที</div>';
-        } else if (price < eLow) {
-          const gap = ((eLow - price) / price * 100).toFixed(1);
-          html = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ราคาต่ำกว่าโซนเข้า ' + gap + '% — รอเด้งกลับเข้าโซน + CDC เขียวก่อน</div>';
-        } else if (tp && price >= tp) {
-          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🚫 ราคาถึง TP แล้ว — รถออกไปแล้ว ห้ามไล่! รอ setup ใหม่</div>';
-        } else {
-          const over = ((price - eHigh) / eHigh * 100).toFixed(1);
-          html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ ราคาเลยโซนเข้าไป +' + over + '% — อย่าไล่ รอย่อกลับเข้าโซนก่อน</div>';
-        }
+        if (price <= sl) html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">❌ ราคาต่ำกว่า SL แล้ว — setup เสีย ไม่เข้า</div>';
+        else if (price >= eLow && price <= eHigh) html = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้า — เช็ค CDC ใน TradingView แล้วเข้าไม้ 1 (ครึ่งเดียว) + ตั้ง SL ทันที</div>';
+        else if (price < eLow) { const gap = ((eLow - price) / price * 100).toFixed(1); html = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ต่ำกว่าโซนเข้า ' + gap + '% — รอเด้งกลับเข้าโซน + CDC เขียวก่อน</div>'; }
+        else if (tp && price >= tp) html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.4);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🚫 ราคาถึง TP แล้ว — รถออกไปแล้ว ห้ามไล่! รอ setup ใหม่</div>';
+        else { const over = ((price - eHigh) / eHigh * 100).toFixed(1); html = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ เลยโซนเข้าไป +' + over + '% — อย่าไล่ รอย่อกลับเข้าโซน</div>'; }
       }
       vd.innerHTML = html;
     }
@@ -1058,45 +855,35 @@ async function fetchLivePrices(coins, pricePrefix, verdictPrefix, direction) {
   }
 }
 
-async function loadScanCache() {
+function loadScanCache() {
   try {
-    const saved = await window.storage.get('is_scan_result');
-    if (saved && saved.value) {
-      const d = JSON.parse(saved.value);
-      if (d.result) renderScan(d.result, new Date(d.time));
-    }
+    const saved = localStorage.getItem('is_scan_result');
+    if (saved) { const d = JSON.parse(saved); if (d.result) renderScan(d.result, new Date(d.time)); }
   } catch(e) {}
 }
 
-// ===== REX PAGE =====
 async function loadRexPage() {
   try {
     const dd = window._mktData || (await (await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=usd&include_24hr_change=true')).json());
     const bp = dd.bitcoin.usd, bc = dd.bitcoin.usd_24h_change;
     document.getElementById('r-btc').textContent = '$' + Math.round(bp).toLocaleString();
     const bce = document.getElementById('r-btc-c');
-    bce.textContent = (bc>=0?'+':'') + bc.toFixed(2) + '%';
-    bce.className = 'ph-chg ' + (bc>=0?'up':'dn');
+    bce.textContent = (bc>=0?'+':'') + bc.toFixed(2) + '%'; bce.className = 'ph-chg ' + (bc>=0?'up':'dn');
     if (dd['pax-gold'] && dd['pax-gold'].usd > 1000) {
       const xp = dd['pax-gold'].usd, xc = dd['pax-gold'].usd_24h_change||0;
       document.getElementById('r-xau').textContent = '$' + Math.round(xp).toLocaleString();
       const xce = document.getElementById('r-xau-c');
-      xce.textContent = (xc>=0?'+':'') + xc.toFixed(2) + '%';
-      xce.className = 'ph-chg ' + (xc>=0?'up':'dn');
+      xce.textContent = (xc>=0?'+':'') + xc.toFixed(2) + '%'; xce.className = 'ph-chg ' + (xc>=0?'up':'dn');
     }
     const rsi = Math.min(78, Math.max(24, Math.round(41 + bc*1.5)));
     const re = document.getElementById('s-rsi');
-    re.textContent = rsi + (rsi>70?' Overbought':rsi<30?' Oversold':' Neutral');
-    re.className = 'sig-val ' + (rsi>70?'dn':rsi<30?'up':'warn');
-    const me = document.getElementById('s-mom');
-    me.textContent = bc>=0?'Bullish':'Bearish';
-    me.className = 'sig-val ' + (bc>=0?'up':'dn');
+    re.textContent = rsi + (rsi>70?' Overbought':rsi<30?' Oversold':' Neutral'); re.className = 'sig-val ' + (rsi>70?'dn':rsi<30?'up':'warn');
+    const me = document.getElementById('s-mom'); me.textContent = bc>=0?'Bullish':'Bearish'; me.className = 'sig-val ' + (bc>=0?'up':'dn');
     const se = document.getElementById('s-sig');
     if (bc>=-1 && rsi<35) { se.textContent='BUY (Oversold)'; se.className='sig-val up'; }
     else if (bc<-3) { se.textContent='CAUTION'; se.className='sig-val dn'; }
     else if (bc<-1) { se.textContent='SELL'; se.className='sig-val dn'; }
     else { se.textContent='HOLD'; se.className='sig-val warn'; }
-    // chart
     const hr = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily');
     if (hr.ok) {
       const hd = await hr.json();
@@ -1106,37 +893,26 @@ async function loadRexPage() {
       btcChart = new Chart(ctx, {
         type:'line',
         data:{labels:prices.map(p=>{const t=new Date(p[0]);return (t.getMonth()+1)+'/'+t.getDate();}),datasets:[{data:prices.map(p=>p[1]),borderColor:bc>=0?'#1D9E75':'#E24B4A',borderWidth:2,pointRadius:0,tension:.3}]},
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-          scales:{x:{ticks:{font:{size:10},color:'#566179',maxTicksLimit:6},grid:{display:false}},
-            y:{ticks:{font:{size:10,family:'JetBrains Mono'},color:'#566179',callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'rgba(255,255,255,.04)'}}}}
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},color:'#566179',maxTicksLimit:6},grid:{display:false}},y:{ticks:{font:{size:10,family:'JetBrains Mono'},color:'#566179',callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'rgba(255,255,255,.04)'}}}}
       });
     }
     window._rexLoaded = true;
   } catch(e) {}
 }
 
-// ===== CHAT =====
 const AGENTS = {
   aria:{name:'Aria',em:'📋',sys:'คุณคือ Aria ผู้ช่วยของคุณออยล์ที่ทำ TikTok Affiliate + เทรดตาม CDC ActionZone ตอบสั้นกระชับภาษาไทย ลงท้าย "ครับคุณออยล์"',sugg:['สรุปวันนี้','ช่วยจัดลำดับงาน']},
   rex:{name:'Rex',em:'📊',sys:'คุณคือ Rex นักวิเคราะห์ CDC ActionZone ของคุณออยล์ ตอบสั้น เน้นตัวเลข Entry/Stop ชัด บอกเสมอว่าไม่ใช่คำแนะนำลงทุน ภาษาไทย',sugg:['LIT ตอนนี้ควรทำไง','BTC วันนี้']},
-  nova:{name:'Nova',em:'🎬',sys:'คุณคือ Nova TikTok strategist ของคุณออยล์ (@kknoil, 1293 followers, สายอาหาร/ไลฟ์สไตล์) เชี่ยวชาญ script ปักตะกร้า ตอบสั้น ภาษาไทย',sugg:['script คลิปวันนี้','hashtag แนะนำ']}
+  nova:{name:'Nova',em:'🎬',sys:'คุณคือ Nova TikTok strategist ของคุณออยล์ (@kknoil, สายอาหาร/ไลฟ์สไตล์) เชี่ยวชาญ script ปักตะกร้า ตอบสั้น ภาษาไทย',sugg:['script คลิปวันนี้','hashtag แนะนำ']}
 };
-function selectAgent(id, btn) {
-  curAgent = id;
-  document.querySelectorAll('.ab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderChat();
-}
+function selectAgent(id, btn) { curAgent = id; document.querySelectorAll('.ab').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderChat(); }
 function renderChat() {
   const a = AGENTS[curAgent];
   const h = histories[curAgent];
   const box = document.getElementById('chat-msgs');
   box.innerHTML = '';
-  if (!h.length) {
-    box.innerHTML = `<div class="welcome">${a.em} ${a.name}<div class="sugg-wrap">${a.sugg.map(s=>`<button class="sugg" onclick="quickChat('${s}')">${s}</button>`).join('')}</div></div>`;
-  } else {
-    h.forEach(m => appendMsg(m.role==='user'?'me':'ai', m.content));
-  }
+  if (!h.length) { box.innerHTML = `<div class="welcome">${a.em} ${a.name}<div class="sugg-wrap">${a.sugg.map(s=>`<button class="sugg" onclick="quickChat('${s}')">${s}</button>`).join('')}</div></div>`; }
+  else { h.forEach(m => appendMsg(m.role==='user'?'me':'ai', m.content)); }
 }
 function quickChat(t) { document.getElementById('chat-ta').value = t; chatSend(); }
 function chatKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); chatSend(); } }
@@ -1178,9 +954,7 @@ async function chatSend() {
   document.getElementById('send-btn').disabled = false;
 }
 
-// ===== GOLD (PAXG = ทองจริง 1 oz) =====
 function fmtG(n){ return n==null?'—':'$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
-
 async function loadGoldPrice() {
   try {
     const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd&include_24hr_change=true');
@@ -1191,62 +965,49 @@ async function loadGoldPrice() {
     document.getElementById('gold-price').textContent = fmtG(g.usd);
     const ce = document.getElementById('gold-chg');
     const chg = g.usd_24h_change || 0;
-    ce.textContent = (chg>=0?'+':'') + chg.toFixed(2) + '% (24h)';
-    ce.className = chg>=0 ? 'up' : 'dn';
+    ce.textContent = (chg>=0?'+':'') + chg.toFixed(2) + '% (24h)'; ce.className = chg>=0 ? 'up' : 'dn';
     return g.usd;
   } catch(e) { return null; }
 }
-
 async function analyzeGold() { return scanCoins(); }
-
-function renderGold(g, cur, dt) {
+function renderGold(g, cur, dt, lv, cdc) {
   const el = id => document.getElementById(id);
   el('gold-loading').style.display='none';
   el('gold-result').style.display='block';
-  const isGreen = g.cdc === 'เขียว';
   const isRed = g.cdc === 'แดง';
+  const isGreen = g.cdc === 'เขียว';
   const cdcColor = isGreen ? 'var(--gd)' : isRed ? 'var(--red)' : 'var(--amb)';
   const dirLabel = isGreen ? '📈 LONG' : isRed ? '📉 SHORT' : '⏳ รอสัญญาณ';
-  const dirColor = isGreen ? 'var(--gd)' : isRed ? 'var(--red)' : 'var(--amb)';
+  el('gold-plan').innerHTML = lv ? levelBlock(lv, isRed, fmtG) : '';
   el('gold-chips').innerHTML =
     '<span style="background:var(--bg3);color:'+cdcColor+';border:1px solid '+cdcColor+';border-radius:6px;padding:3px 8px;font-weight:700;">CDC: '+(g.cdc||'—')+'</span>' +
-    '<span style="background:var(--bg3);color:'+dirColor+';border:1px solid '+dirColor+';border-radius:6px;padding:3px 8px;font-weight:700;">ทิศทาง: '+dirLabel+'</span>' +
-    '<span style="background:var(--gl);color:var(--gd);border:1px solid var(--gm);border-radius:6px;padding:3px 8px;">เข้า '+fmtG(g.entry_low)+'–'+fmtG(g.entry_high)+'</span>' +
-    '<span style="background:var(--rl);color:var(--red);border:1px solid rgba(226,75,74,.3);border-radius:6px;padding:3px 8px;">SL '+fmtG(g.sl)+'</span>' +
-    '<span style="background:var(--pubg);color:#AFA9EC;border:1px solid rgba(127,119,221,.3);border-radius:6px;padding:3px 8px;">TP '+fmtG(g.tp1)+'</span>';
+    '<span style="background:var(--bg3);color:'+cdcColor+';border:1px solid '+cdcColor+';border-radius:6px;padding:3px 8px;font-weight:700;">ทิศทาง: '+dirLabel+'</span>';
   el('gold-reason').innerHTML = '<span class="coin-label">Rex วิเคราะห์</span>' + (g.summary||'—');
   el('gold-risk').textContent = '⚠️ ' + (g.risk||'—');
-  // verdict เทียบราคาปัจจุบันกับโซน — คำนึงทิศทาง Long/Short ด้วย
   let v = '';
+  const eLow = lv ? Math.min(lv.entry1, lv.entry2) : g.entry_low;
+  const eHigh = lv ? Math.max(lv.entry1, lv.entry2) : g.entry_high;
   if (isRed) {
-    // ทองแดง = โซนเข้าคือจุด Short (entry_low/high คือกรอบรีบาวด์ที่จะเข้าขาย)
-    if (g.entry_low && g.entry_high && cur) {
-      if (cur >= g.entry_low && cur <= g.entry_high) v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">✅ CDC แดง + ราคาอยู่ในโซน — พิจารณา Short ได้ (ห้าม Long)</div>';
+    if (eLow && eHigh && cur) {
+      if (cur >= eLow && cur <= eHigh) v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">✅ CDC แดง + ราคาอยู่ในโซน — พิจารณา Short ไม้ 1 ได้ (ห้าม Long)</div>';
       else v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🔴 CDC แดง — ห้าม Long เด็ดขาด รอราคาเข้าโซนก่อนพิจารณา Short</div>';
-    } else {
-      v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🔴 CDC แดง — ห้ามเปิด Long วันนี้</div>';
-    }
-  } else if (g.entry_low && g.entry_high && cur) {
-    if (cur >= g.entry_low && cur <= g.entry_high) v = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้า — เช็ค CDC จริงแล้วจัดได้</div>';
-    else if (cur > g.entry_high) v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ เลยโซนเข้าแล้ว — รอย่อ อย่าไล่</div>';
+    } else v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">🔴 CDC แดง — ห้ามเปิด Long วันนี้</div>';
+  } else if (eLow && eHigh && cur) {
+    if (cur >= eLow && cur <= eHigh) v = '<div style="background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--gd);font-weight:600;">✅ ราคาอยู่ในโซนเข้า — เช็ค CDC จริงแล้วเข้าไม้ 1 ได้</div>';
+    else if (cur > eHigh) v = '<div style="background:var(--rl);border:1px solid rgba(226,75,74,.3);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--red);font-weight:600;">⚠️ เลยโซนเข้าแล้ว — รอย่อ อย่าไล่</div>';
     else v = '<div style="background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--amb);font-weight:600;">⏳ ต่ำกว่าโซนเข้า — รอสัญญาณกลับตัวก่อน</div>';
   }
   el('gold-verdict').innerHTML = v;
   el('gold-time').textContent = (dt||new Date()).toLocaleDateString('th-TH') + ' ' + (dt||new Date()).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
 }
-
 async function loadGoldCache() {
   const cur = await loadGoldPrice();
   try {
-    const saved = await window.storage.get('is_gold_result');
-    if (saved && saved.value) {
-      const d = JSON.parse(saved.value);
-      if (d.result) renderGold(d.result, cur || d.cur, new Date(d.time));
-    }
+    const saved = localStorage.getItem('is_gold_result');
+    if (saved) { const d = JSON.parse(saved); if (d.result) renderGold(d.result, cur || d.cur, new Date(d.time), d.lv, null); }
   } catch(e) {}
 }
 
-// ===== INIT =====
 window.addEventListener('load', () => {
   if (apiKey) { document.getElementById('key-in').value = apiKey; document.getElementById('key-ok').style.display='block'; }
   renderTasks(); renderIncome(); loadTradePlan(); loadScanCache(); loadGoldCache();
