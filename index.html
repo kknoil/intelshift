@@ -585,11 +585,11 @@ async function scanCoins() {
     const mr = await cgFetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=150&page=1&price_change_percentage=24h%2C7d');
     if (!mr || !mr.ok) throw new Error('CoinGecko จำกัดความถี่ชั่วคราว — รอ 1-2 นาทีแล้วกดสแกนใหม่ครับ');
     const all = await mr.json();
-    const SKIP = ['usdt','usdc','dai','busd','tusd','usde','fdusd','wbtc','weth','wsteth','steth','cbbtc','reth','usds','pyusd','usdd','usdt0','bsc-usd'];
+    const SKIP = ['usdt','usdc','dai','busd','tusd','usde','fdusd','wbtc','weth','wsteth','steth','cbbtc','reth','usds','pyusd','usdd','usdt0','bsc-usd','usds','pyusd','usdd','usdt0','bsc-usd','usd1','usdf','gho','frax','lusd','crvusd','usdx','susds'];
     const candidates = all
       .filter(c => (c.market_cap_rank || 999) >= 20)
       .filter(c => !SKIP.includes((c.symbol||'').toLowerCase()))
-      .filter(c => { const d7 = c.price_change_percentage_7d_in_currency || 0; return d7 > -30 && d7 < 50; })
+      .filter(c => { const d7 = c.price_change_percentage_7d_in_currency || 0; const move = Math.abs(c.price_change_percentage_24h_in_currency || 0) + Math.abs(d7); return d7 > -30 && d7 < 50 && move > 3; })
       .sort((a, b) => (b.total_volume / b.market_cap) - (a.total_volume / a.market_cap))
       .slice(0, 15);
     if (!candidates.length) throw new Error('วันนี้ไม่มีเหรียญเข้าเงื่อนไข ลองพรุ่งนี้ครับ');
