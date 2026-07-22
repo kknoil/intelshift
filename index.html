@@ -600,12 +600,20 @@ async function scanCoins() {
     if (!mr || !mr.ok) throw new Error('CoinGecko จำกัดความถี่ชั่วคราว — รอ 1-2 นาทีแล้วกดสแกนใหม่ครับ');
     const all = await mr.json();
     const SKIP = ['usdt','usdc','dai','busd','tusd','usde','fdusd','wbtc','weth','wsteth','steth','cbbtc','reth','usds','pyusd','usdd','usdt0','bsc-usd','usd1','usdf','gho','frax','lusd','crvusd','usdx','susds'];
-    const candidates = all
-      .filter(c => (c.market_cap_rank || 999) >= 20)
-      .filter(c => !SKIP.includes((c.symbol||'').toLowerCase()))
-      .filter(c => { const d7 = c.price_change_percentage_7d_in_currency || 0; const move = Math.abs(c.price_change_percentage_24h_in_currency || 0) + Math.abs(d7); return d7 > -30 && d7 < 50 && move > 3; })
+    const notStable = all.filter(c => !SKIP.includes((c.symbol||'').toLowerCase()));
+    const inRange = c => { const d7 = c.price_change_percentage_7d_in_currency || 0; return d7 > -30 && d7 < 50; };
+    // เหรียญใหญ่ (อันดับ <=20): ดึงมาสแกนด้วยเสมอ ไม่ต้องมี momentum เพราะมันขยับช้า
+    const bigCaps = notStable
+      .filter(c => (c.market_cap_rank || 999) <= 20)
+      .filter(inRange)
+      .slice(0, 8);
+    // เหรียญกลาง-เล็ก (อันดับ >20): ต้องมี momentum (move>3) เหมือนเดิม
+    const others = notStable
+      .filter(c => (c.market_cap_rank || 999) > 20)
+      .filter(c => { const d7 = c.price_change_percentage_7d_in_currency || 0; const move = Math.abs(c.price_change_percentage_24h_in_currency || 0) + Math.abs(d7); return inRange(c) && move > 3; })
       .sort((a, b) => (b.total_volume / b.market_cap) - (a.total_volume / a.market_cap))
-      .slice(0, 15);
+      .slice(0, 10);
+    const candidates = bigCaps.concat(others);
     if (!candidates.length) throw new Error('วันนี้ไม่มีเหรียญเข้าเงื่อนไข ลองพรุ่งนี้ครับ');
 
     setLoad('วเคราะห์ทองคำก่อน...');
@@ -664,7 +672,7 @@ async function scanCoins() {
               chg24h: +(c.price_change_percentage_24h_in_currency || 0).toFixed(2),
               chg7d: +(c.price_change_percentage_7d_in_currency || 0).toFixed(2),
               vol_mcap: +((c.total_volume / c.market_cap) * 100).toFixed(1),
-              cdc_status: cdc.status, cdc_explain: cdcExplain(cdc.status, cdc, isShort),
+              cdc_status: cdc.status, cdc_bars: cdc.barsSince, cdc_explain: cdcExplain(cdc.status, cdc, isShort),
               vol_confirm: volConfirm, atr_pct: lv ? lv.atr_pct : null,
               trend_tag: trend ? trend.tag : null, plan: lv
             });
@@ -678,8 +686,16 @@ async function scanCoins() {
       await new Promise(r => setTimeout(r, 1300));
     }
 
-    const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1};
-    const qualified = analyzed.filter(c => c.cdc_status in RANKED).sort((a, b) => RANKED[a.cdc_status] - RANKED[b.cdc_status] || b.vol_mcap - a.vol_mcap).slice(0, 4);
+    const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1, GREEN: 2};
+    const BIGCAP_GREEN_MAXBARS = 5; // เหรียญใหญ่ยอมรับ GREEN ที่ตัดมายังไม่เกินกี่แท่ง (ปรับเลขนี้ได้)
+    const isBig = c => (c.rank || 999) <= 20;
+    const qualifies = c => {
+      if (c.cdc_status === 'FRESH_GREEN' || c.cdc_status === 'NEAR_CROSS') return true;
+      // เฉพาะเหรียญใหญ่: ยอมรับ GREEN ที่เพิ่งตัดไม่เกิน N แท่ง (มันขยับช้า เข้ายังทัน)
+      if (isBig(c) && c.cdc_status === 'GREEN' && c.cdc_bars != null && c.cdc_bars <= BIGCAP_GREEN_MAXBARS) return true;
+      return false;
+    };
+    const qualified = analyzed.filter(qualifies).sort((a, b) => ((RANKED[a.cdc_status] ?? 9) - (RANKED[b.cdc_status] ?? 9)) || b.vol_mcap - a.vol_mcap).slice(0, 6);
     const qualifiedShort = analyzed.filter(c => c.cdc_status === 'FRESH_RED').sort((a, b) => b.vol_mcap - a.vol_mcap).slice(0, 2);
     if (!qualified.length && !qualifiedShort.length && !goldCdc) throw new Error('วันนี้ไม่มีเหรียญ CDC เขียวสดหรือแดงสดเลย — ' + (btcCdc && btcCdc.status === 'RED' ? 'BTC เองก็ยังแดง ' : '') + 'ถือเงินสดรอคอ position ที่ถูกต้องครับ');
 
@@ -690,6 +706,7 @@ async function scanCoins() {
       'สำคัญมาก — กติกาเหล็ก: ระบบคำนวณ EMA/CDC/ATR/entry/SL/TP จากราคาปดจริงแล้วทั้งหมด\n' +
       'ห้ามคุณบรรยายทิศทาง EMA เอง ห้ามเดาว่า EMA ตัดขึ้นหรือลง ห้ามแตงตัวเลขราคาเอง — ทุกเหรียญมีฟิลด์ cdc_explain ที่ระบบเขียนจากตัวเลขจริงแล้ว ให้ reason ของคุณ "อ้างอิงตาม cdc_explain เท่านั้น" ห้ามพูดสวนกับมัน\n' +
       'ถ้า cdc_status = NEAR_CROSS แปลว่า "ยังไม่ตัด ยังไม่ใช่สัญญาณเข้า" ห้ามเขียนว่าตัดแล้วหรือสญญาณ Long พร้อม เด็ดขาด\n' +
+      'เหรียญใหญ่ (อันดับ <=20) ที่ cdc_status=GREEN ถือเป็นสัญญาณเข้าที่ใช้ได้ (มันขยับช้า เข้ายังทัน) อย่าบอกว่าเข้าไม่ได้เพราะไม่สด และถ้ามีเหรียญใหญ่เข้าเงื่อนไข ให้ใส่มาด้วยเสมอ อย่าตัดทิ้ง\n' +
       'entry/SL/TP อยู่ในฟิลด์ plan แล้ว ใส่ในคำตอบตรงๆ: entry_low=plan.entry1, entry_high=plan.entry2, sl=plan.sl, tp1=plan.tp1 ห้ามคิดเลขเอง\n' +
       'หน้าที่คุณ: เขียน reason (สรุปจาก cdc_explain + แผน 2 ไม้) กับ risk เป็นภาษาไทยสั้นๆ เท่านั้น\n' +
       'แผนเข้า 2 ไม้: ไม้ 1 ครึ่งเดยวตอนยังไม่ยืนยัน ไม้ 2 เมอยืนยัน (ปิดแท่งเหนอ/ใต้ EMA12) — สื่อใน reason\n' +
@@ -698,7 +715,7 @@ async function scanCoins() {
       'ผู้สมัคร SHORT:\n' + JSON.stringify(qualifiedShort) + '\n' +
       'BTC ตลาดใหญ่: ' + (btcCdc ? JSON.stringify({status:btcCdc.status, weekly:btcCdc.weekly}) : 'ไม่มีข้อมูล') + ' — ถ้า BTC RED บอกใน summary ว่า Long ควรลด/งด Short เข้าได\n' +
       (goldCdc ? ('ทอง XAU $' + goldCur + ' cdc_status=' + goldCdc.status + ' cdc_explain="' + goldExplain + '" plan=' + JSON.stringify(goldLevels) + ' — ใช้ตัวเลขจาก plan, reason อ้างตาม cdc_explain\n') : '') +
-      'เลือก Long ไม่เกิน 3, Short ไม่เกิน 2\n' +
+      'เลือก Long ไม่เกิน 5, Short ไม่เกิน 2\n' +
       'ตอบ JSON เท่านั้น ไม่มี markdown:\n' +
       '{"summary":"ภาพรวม ไทย 1-2 ประโยค","gold":{"cdc":"' + goldStatusTH + '","summary":"อ้างตาม cdc_explain ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"},"coins":[{"symbol":"TICKER","name":"ชื่อ + อันดบ + CDC ไทย","reason":"อ้างตาม cdc_explain + แผน 2 ไม้ ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"}],"coins_short":[{"symbol":"TICKER","name":"ชื่อ + อันดับ + CDC ไทย","reason":"อ้างตาม cdc_explain ไทย 1-2 ประโยค","risk":"ไทย 1 ประโยค"}]}';
 
@@ -1033,4 +1050,3 @@ window.addEventListener('load', () => {
 </script>
 </body>
 </html>
-
