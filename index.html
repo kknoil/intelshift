@@ -178,6 +178,7 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
         <div style="font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--red);margin-bottom:8px;">📉 ฝั่ง SHORT — โอกาสตอนตลาดขาลง</div>
         <div id="short-list"></div>
       </div>
+      <div id="scan-diag" style="display:none;font-size:11px;color:var(--tx3);margin-top:10px;padding-top:8px;border-top:1px solid var(--br);line-height:1.6;"></div>
       <button class="btn btn-purple btn-full" id="scan-btn" onclick="scanCoins()" style="margin-top:12px;">🔍 สแกนทอง + เหรียญวันนี้ (~0.5฿)</button>
       <div id="scan-cost" style="display:none;font-size:11px;color:var(--tx3);margin-top:8px;text-align:center;"></div>
       <div class="scan-note" style="margin-top:10px;">ข้อมูลสดจาก CoinGecko + AI วิเคราะห์ ไม่ใช่คำแนะนำการลงทุน เช็กราคาจริงบน Bybit และรอ CDC ยืนยนก่อนเข้าเสมอ</div>
@@ -593,6 +594,28 @@ function levelBlock(lv, isShort, fmt) {
 const SCAN_COOLDOWN_MS = 60000; // กันยิง CoinGecko ถี่เกิน (ปรับได้ ถ้าเจอ error 429 บ่อยให้เพิ่มเป็น 90000)
 const SCAN_BTN_LABEL = '🔍 สแกนทอง + เหรียญวันนี้ (~0.5฿)';
 let cooldownTimer = null;
+
+// ── ตัวนับผลสแกน: แยกให้ออกว่า "ตลาดไม่มีสัญญาณ" กับ "สแกนพัง/โดน rate limit" ──
+let scanStats = null;
+function newScanStats() {
+  return { universe: 0, shortlist: 0, fetched: 0, failed: 0, noCdc: 0, analyzed: 0, passed: 0, long: 0, short: 0, gold: false, btc: false };
+}
+function renderScanDiag(s, dt) {
+  const el = document.getElementById('scan-diag');
+  if (!el) return;
+  if (!s) { el.style.display = 'none'; return; }
+  const t = (dt || new Date()).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+  const parts = [];
+  parts.push('สแกน ' + (s.fetched||0) + '/' + (s.shortlist||0) + ' เหรียญ (คัดจาก ' + (s.universe||0) + ')');
+  parts.push('ผ่านตัวกรอง ' + (s.passed||0) + ' — Long ' + (s.long||0) + ' / Short ' + (s.short||0));
+  if (s.failed) parts.push('⚠️ ดึงข้อมูลไม่สำเร็จ ' + s.failed);
+  parts.push('ทอง ' + (s.gold ? '✓' : '✕') + ' · BTC ' + (s.btc ? '✓' : '✕'));
+  parts.push(t);
+  el.textContent = parts.join(' · ');
+  const bad = (s.failed||0) > 0 || !s.gold || !s.btc;
+  el.style.color = bad ? 'var(--amb)' : 'var(--tx3)';
+  el.style.display = 'block';
+}
 function startCooldownCountdown() {
   const btn = document.getElementById('scan-btn');
   if (!btn) return;
@@ -621,6 +644,8 @@ async function scanCoins() {
   el('scan-key-hint').style.display = 'none';
   el('scan-error').style.display = 'none';
   el('scan-summary').style.display = 'none';
+  if (el('scan-diag')) el('scan-diag').style.display = 'none';
+  scanStats = newScanStats();
   el('coin-list').innerHTML = '';
   el('scan-loading').style.display = 'block';
   setLoad('ดึงข้อมูลตลาดสด...');
@@ -644,6 +669,8 @@ async function scanCoins() {
       .sort((a, b) => (b.total_volume / b.market_cap) - (a.total_volume / a.market_cap))
       .slice(0, 8);
     const candidates = bigCaps.concat(others);
+    scanStats.universe = notStable.length;
+    scanStats.shortlist = candidates.length;
     if (!candidates.length) throw new Error('วันนี้ไม่มีเหรียญเข้าเงื่อนไข ลองพรุ่งนี้ครับ');
 
     setLoad('วเคราะห์ทองคำก่อน...');
@@ -657,6 +684,7 @@ async function scanCoins() {
         goldCdc = cdcStatus(goldCloses);
         goldWeekly = weeklyTrend(ghd.prices);
         if (goldCdc) goldLevels = buildLevels(goldCur, calcATR(goldCloses, 14), goldCdc.ema12, goldCdc.ema26, goldCdc.status);
+        scanStats.gold = !!goldCdc;
       }
     } catch(e) {}
     await new Promise(r => setTimeout(r, 1500));
@@ -670,6 +698,7 @@ async function scanCoins() {
         btcCdc = cdcStatus(bhd.prices.map(p => p[1]));
         btcWeekly = weeklyTrend(bhd.prices);
         if (btcCdc && btcWeekly) btcCdc.weekly = btcWeekly.status;
+        scanStats.btc = !!btcCdc;
       }
     } catch(e) {}
     await new Promise(r => setTimeout(r, 1500));
@@ -680,7 +709,9 @@ async function scanCoins() {
       setLoad('คำนวณ CDC จริง ' + (i+1) + '/' + candidates.length + ' — ' + c.symbol.toUpperCase());
       try {
         const hr = await cgFetch('https://api.coingecko.com/api/v3/coins/' + c.id + '/market_chart?vs_currency=usd&days=365&interval=daily', 2);
+        if (!hr || !hr.ok) { scanStats.failed++; }
         if (hr && hr.ok) {
+          scanStats.fetched++;
           const hd = await hr.json();
           const closes = hd.prices.map(p => p[1]);
           const cdc = cdcStatus(closes);
@@ -710,9 +741,11 @@ async function scanCoins() {
             window._trendMap[(c.symbol||'').toUpperCase()] = trend;
             window._lvMap = window._lvMap || {};
             if (lv) window._lvMap[(c.symbol||'').toUpperCase()] = lv;
+          } else {
+            scanStats.noCdc++;
           }
         }
-      } catch(e) {}
+      } catch(e) { scanStats.failed++; }
       await new Promise(r => setTimeout(r, 2200));
     }
 
@@ -727,6 +760,11 @@ async function scanCoins() {
     };
     const qualified = analyzed.filter(qualifies).sort((a, b) => ((RANKED[a.cdc_status] ?? 9) - (RANKED[b.cdc_status] ?? 9)) || b.vol_mcap - a.vol_mcap).slice(0, 6);
     const qualifiedShort = analyzed.filter(c => c.cdc_status === 'FRESH_RED').sort((a, b) => b.vol_mcap - a.vol_mcap).slice(0, 2);
+    scanStats.analyzed = analyzed.length;
+    scanStats.long = qualified.length;
+    scanStats.short = qualifiedShort.length;
+    scanStats.passed = qualified.length + qualifiedShort.length;
+    renderScanDiag(scanStats, new Date());
     if (!qualified.length && !qualifiedShort.length && !goldCdc) throw new Error('วันนี้ไม่มีเหรียญ CDC เขียวสดหรือแดงสดเลย — ' + (btcCdc && btcCdc.status === 'RED' ? 'BTC เองก็ยังแดง ' : '') + 'ถือเงินสดรอคอ position ที่ถูกต้องครับ');
 
     setLoad('Rex กำลังสรปแผน...');
@@ -788,6 +826,7 @@ async function scanCoins() {
     parsed._trend = window._trendMap || {};
     parsed._lv = window._lvMap || {};
     if (goldLevels) parsed._goldLv = goldLevels;
+    parsed._stats = scanStats;
     const scanData = {result: parsed, time: new Date().toISOString()};
     try { localStorage.setItem('is_scan_result', JSON.stringify(scanData)); } catch(e) {}
     renderScan(parsed, new Date());
@@ -801,6 +840,7 @@ async function scanCoins() {
     document.getElementById('scan-loading').style.display = 'none';
     document.getElementById('scan-error').style.display = 'block';
     document.getElementById('scan-error-msg').textContent = e.message;
+    renderScanDiag(scanStats, new Date());
   } finally {
     startCooldownCountdown();
   }
@@ -871,6 +911,7 @@ function renderScan(parsed, dt) {
       </div>`).join('');
   } else { shortWrap.style.display = 'none'; }
   document.getElementById('scan-time').textContent = (dt||new Date()).toLocaleDateString('th-TH') + ' ' + (dt||new Date()).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  if (parsed._stats) renderScanDiag(parsed._stats, dt);
   fetchLivePrices(parsed.coins, 'live-', 'verdict-', 'long');
   if (shortCoins.length) fetchLivePrices(shortCoins, 'live-s', 'verdict-s', 'short');
 }
