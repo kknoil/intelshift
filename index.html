@@ -235,6 +235,12 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
       <div id="key-ok" style="font-size:12px;color:var(--g);margin-top:8px;display:none;">✅ พร้อมใช้งาน</div>
     </div>
     <div class="card">
+      <div class="card-title"><span>🦎 CoinGecko Demo Key (ฟรี)</span></div>
+      <div class="key-input-row"><input type="password" class="key-input" id="cg-key-in" placeholder="CG-..."/><button class="btn" onclick="saveCgKey()">บันทึก</button></div>
+      <div class="small-note">แก้อาการสแกนแล้วเจอ "CoinGecko บล็อก (429)" — คีย์ฟรีเพิ่มโควตาเป็น ~30 ครั้ง/นาที<br>สมัครฟรีที่ <a href="https://www.coingecko.com/en/developers/dashboard" target="_blank">coingecko.com/developers</a> → Create Demo Account → คัดลอกคีย์ (ขึ้นต้น CG-) มาวาง</div>
+      <div id="cg-key-ok" style="font-size:12px;color:var(--g);margin-top:8px;display:none;">✅ ใส่คีย์ CoinGecko แล้ว</div>
+    </div>
+    <div class="card">
       <div class="card-title"><span>เคล็ดลับประหยัด</span></div>
       <div style="font-size:13px;color:var(--tx2);line-height:1.8;">· สแกนวันละ 1 ครั้งพอ ผลถูกเก็บไว้ดูซ้ำได้ฟรี<br>· ตั้ง Price Alert ใน Bybit แทนการเช็คบ่อยๆ<br>· วิเคราะห์ยาวๆ ไปคุยใน Claude.ai (ฟรีตาม plan)<br>· Chat ในนี้ใช้ถามสั้นๆ เร็วๆ พอ</div>
     </div>
@@ -249,6 +255,7 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
 </div>
   <script>
 let apiKey = localStorage.getItem('is_key') || '';
+let cgKey = localStorage.getItem('is_cg_key') || '';
 let tasks = JSON.parse(localStorage.getItem('is_tasks') || '[]');
 let income = JSON.parse(localStorage.getItem('is_income2') || '{"tiktok":0,"trade":0,"other":0}');
 let histories = {aria:[],rex:[],nova:[]};
@@ -429,11 +436,17 @@ function saveKey() {
   document.getElementById('scan-key-hint').style.display = 'none';
 }
 
+function saveCgKey() {
+  const k = document.getElementById('cg-key-in').value.trim();
+  localStorage.setItem('is_cg_key', k); cgKey = k;
+  document.getElementById('cg-key-ok').style.display = k ? 'block' : 'none';
+}
+
 async function cgFetch(url, tries) {
   tries = tries || 3;
   for (let t = 0; t < tries; t++) {
     try {
-      const r = await fetch(url);
+      const r = await fetch(url, cgKey ? {headers:{'x-cg-demo-api-key':cgKey}} : undefined);
       if (r.ok) return r;
       if (r.status === 429) { await new Promise(x => setTimeout(x, 4000 * (t+1))); continue; }
       return r;
@@ -614,7 +627,7 @@ async function scanCoins() {
   el('scan-btn').disabled = true;
   try {
     const mr = await cgFetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=150&page=1&price_change_percentage=24h%2C7d');
-    if (!mr || !mr.ok) throw new Error('CoinGecko จำกัดความถี่ชั่วคราว — รอ 1-2 นาทีแล้วกดสแกนใหม่ครับ');
+    if (!mr || !mr.ok) throw new Error('CoinGecko บล็อกเพราะยิงถี่เกิน (429) — วิธีแก้ถาวร: ใส่ CoinGecko Demo Key ฟรีที่แท็บ ⚙️ (มีวิธีในนั้น) หรือรอ 1-2 นาทีแล้วสแกนใหม่');
     const all = await mr.json();
     const SKIP = ['usdt','usdc','dai','busd','tusd','usde','fdusd','wbtc','weth','wsteth','steth','cbbtc','reth','usds','pyusd','usdd','usdt0','bsc-usd','usd1','usdf','gho','frax','lusd','crvusd','usdx','susds'];
     const notStable = all.filter(c => !SKIP.includes((c.symbol||'').toLowerCase()));
@@ -623,13 +636,13 @@ async function scanCoins() {
     const bigCaps = notStable
       .filter(c => (c.market_cap_rank || 999) <= 20)
       .filter(inRange)
-      .slice(0, 8);
+      .slice(0, 6);
     // เหรียญกลาง-เล็ก (อันดับ >20): ต้องมี momentum (move>3) เหมือนเดิม
     const others = notStable
       .filter(c => (c.market_cap_rank || 999) > 20)
       .filter(c => { const d7 = c.price_change_percentage_7d_in_currency || 0; const move = Math.abs(c.price_change_percentage_24h_in_currency || 0) + Math.abs(d7); return inRange(c) && move > 3; })
       .sort((a, b) => (b.total_volume / b.market_cap) - (a.total_volume / a.market_cap))
-      .slice(0, 10);
+      .slice(0, 8);
     const candidates = bigCaps.concat(others);
     if (!candidates.length) throw new Error('วันนี้ไม่มีเหรียญเข้าเงื่อนไข ลองพรุ่งนี้ครับ');
 
@@ -700,7 +713,7 @@ async function scanCoins() {
           }
         }
       } catch(e) {}
-      await new Promise(r => setTimeout(r, 1300));
+      await new Promise(r => setTimeout(r, 2200));
     }
 
     const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1, GREEN: 2};
@@ -874,12 +887,12 @@ async function fetchLivePrices(coins, pricePrefix, verdictPrefix, direction) {
     try {
       let id = cached ? cached.id : null;
       if (!id) {
-        const sr = await fetch('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(ticker));
+        const sr = await fetch('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(ticker), cgKey ? {headers:{'x-cg-demo-api-key':cgKey}} : undefined);
         if (sr.ok) { const sd = await sr.json(); const hit = (sd.coins || []).find(c => c.symbol.toUpperCase() === ticker) || (sd.coins || [])[0]; if (hit) id = hit.id; }
         await new Promise(r => setTimeout(r, 800));
       }
       if (id) {
-        const pr = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=' + id + '&vs_currencies=usd&include_24hr_change=true');
+        const pr = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=' + id + '&vs_currencies=usd&include_24hr_change=true', cgKey ? {headers:{'x-cg-demo-api-key':cgKey}} : undefined);
         if (pr.ok) { const pd = await pr.json(); if (pd[id]) { price = pd[id].usd; chg = pd[id].usd_24h_change || 0; } }
       }
     } catch(e) {}
@@ -1070,6 +1083,7 @@ async function loadGoldCache() {
 
 window.addEventListener('load', () => {
   if (apiKey) { document.getElementById('key-in').value = apiKey; document.getElementById('key-ok').style.display='block'; }
+  if (cgKey) { document.getElementById('cg-key-in').value = cgKey; document.getElementById('cg-key-ok').style.display='block'; }
   renderTasks(); renderIncome(); loadTradePlan(); loadScanCache(); loadGoldCache();
   startCooldownCountdown();
 });
