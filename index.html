@@ -466,6 +466,51 @@ document.addEventListener('visibilitychange', function() {
       document.getElementById('scan-loading').style.display !== 'none') cgWakeOn();
 });
 
+
+// ── แคชกราฟรายวัน ──
+// แท่งเทียนรายวันเปลี่ยนวันละครั้ง ดึงซ้ำภายในวันเดียวกันไม่มีประโยชน์
+// ถ้าเน็ตหลุด ใช้ของเดิมในวันนี้แทนได้เลย ดีกว่าปล่อยให้เหรียญหายไปจากผลสแกน
+const CHART_TTL_MS = 12 * 3600 * 1000;
+
+function chartCacheGet(id) {
+  try {
+    const raw = localStorage.getItem('cg:chart:' + id);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    if (!o || !o.t || !o.prices || (Date.now() - o.t) > CHART_TTL_MS) return null;
+    return o;
+  } catch(e) { return null; }
+}
+
+function chartCacheSet(id, data) {
+  try {
+    localStorage.setItem('cg:chart:' + id, JSON.stringify({
+      t: Date.now(), prices: data.prices, total_volumes: data.total_volumes || []
+    }));
+  } catch(e) {
+    // เต็มโควตา -> ล้างแคชกราฟเก่าทิ้งแล้วลองใหม่ครั้งเดียว
+    try {
+      Object.keys(localStorage).filter(k => k.indexOf('cg:chart:') === 0).forEach(k => localStorage.removeItem(k));
+      localStorage.setItem('cg:chart:' + id, JSON.stringify({ t: Date.now(), prices: data.prices, total_volumes: data.total_volumes || [] }));
+    } catch(e2) {}
+  }
+}
+
+// ดึงกราฟ: เน็ตก่อน ถ้าไม่ได้ค่อยตกไปใช้แคชของวันนี้
+async function getChart(id, label, tries) {
+  const url = 'https://api.coingecko.com/api/v3/coins/' + id + '/market_chart?vs_currency=usd&days=365';
+  const r = await cgFetch(url, tries, label);
+  if (r && r.ok) {
+    try {
+      const d = await r.json();
+      if (d && d.prices && d.prices.length) { chartCacheSet(id, d); return { data: d, cached: false }; }
+    } catch(e) {}
+  }
+  const c = chartCacheGet(id);
+  if (c) return { data: c, cached: true };
+  return null;
+}
+
 function resetCgState() { cgState = { hits429: 0, hardFail: 0, delayMs: CG_DELAY_MIN, errors: [], backgrounded: false }; }
 function cgLogFail(label, status, body) {
   cgState.errors.push({ label: label || '?', status: status, body: (body || '').slice(0, 120) });
@@ -648,7 +693,7 @@ function levelBlock(lv, isShort, fmt) {
 }
 </script>
 <script>
-const BUILD_TAG = 'b6-wake';   // เปลี่ยนทุกครั้งที่แก้ ใช้เช็คว่า deploy ขึ้นจริงไหม
+const BUILD_TAG = 'b7-cache';   // เปลี่ยนทุกครั้งที่แก้ ใช้เช็คว่า deploy ขึ้นจริงไหม
 const SCAN_COOLDOWN_MS = 60000; // กันยิง CoinGecko ถี่เกิน (ปรับได้ ถ้าเจอ error 429 บ่อยให้เพิ่มเป็น 90000)
 const SCAN_BTN_LABEL = '🔍 สแกนทอง + เหรียญวันนี้ (~0.5฿)';
 let cooldownTimer = null;
@@ -656,7 +701,7 @@ let cooldownTimer = null;
 // ── ตัวนับผลสแกน: แยกให้ออกว่า "ตลาดไม่มีสัญญาณ" กับ "สแกนพัง/โดน rate limit" ──
 let scanStats = null;
 function newScanStats() {
-  return { universe: 0, shortlist: 0, fetched: 0, failed: 0, noCdc: 0, analyzed: 0, passed: 0, long: 0, short: 0, gold: false, btc: false, hits429: 0, noKey: !cgKey, errors: [], backgrounded: false };
+  return { universe: 0, shortlist: 0, fetched: 0, failed: 0, noCdc: 0, analyzed: 0, passed: 0, long: 0, short: 0, gold: false, btc: false, hits429: 0, noKey: !cgKey, errors: [], backgrounded: false, cached: 0 };
 }
 function renderScanDiag(s, dt) {
   const el = document.getElementById('scan-diag');
@@ -667,6 +712,7 @@ function renderScanDiag(s, dt) {
   parts.push('สแกน ' + (s.fetched||0) + '/' + (s.shortlist||0) + ' เหรียญ (คัดจาก ' + (s.universe||0) + ')');
   parts.push('ผ่านตัวกรอง ' + (s.passed||0) + ' — Long ' + (s.long||0) + ' / Short ' + (s.short||0));
   if (s.failed) parts.push('⚠️ ดึงข้อมูลไม่สำเร็จ ' + s.failed);
+  if (s.cached) parts.push('💾 ใช้ข้อมูลแคชวันนี้ ' + s.cached);
   parts.push('ทอง ' + (s.gold ? '✓' : '✕') + ' · BTC ' + (s.btc ? '✓' : '✕'));
   parts.push(t);
   parts.push('build ' + BUILD_TAG);
@@ -780,9 +826,10 @@ async function scanCoins() {
     setLoad('เช็คสภาพตลาดใหญ่ (BTC)...');
     let btcCdc = null, btcWeekly = null;
     const loadBtc = async () => {
-      const bhr = await cgFetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365', 3, 'BTC');
-      if (!bhr || !bhr.ok) return false;
-      const bhd = await bhr.json();
+      const got = await getChart('bitcoin', 'BTC', 3);
+      if (!got) return false;
+      if (got.cached) scanStats.cached++;
+      const bhd = got.data;
       btcCdc = cdcStatus(bhd.prices.map(p => p[1]));
       btcWeekly = weeklyTrend(bhd.prices);
       if (btcCdc && btcWeekly) btcCdc.weekly = btcWeekly.status;
@@ -800,9 +847,10 @@ async function scanCoins() {
     setLoad('วิเคราะห์ทองคำ...');
     let goldCloses = null, goldCur = null, goldCdc = null, goldWeekly = null, goldLevels = null;
     try {
-      const ghr = await cgFetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=365', 3, 'GOLD');
-      if (ghr && ghr.ok) {
-        const ghd = await ghr.json();
+      const gGot = await getChart('pax-gold', 'GOLD', 3);
+      if (gGot) {
+        if (gGot.cached) scanStats.cached++;
+        const ghd = gGot.data;
         goldCloses = ghd.prices.map(p => p[1]);
         goldCur = +goldCloses[goldCloses.length-1].toFixed(1);
         goldCdc = cdcStatus(goldCloses);
@@ -814,15 +862,22 @@ async function scanCoins() {
     await cgPace();
 
     const analyzed = [];
-    for (let i = 0; i < candidates.length; i++) {
-      const c = candidates[i];
-      setLoad('คำนวณ CDC จริง ' + (i+1) + '/' + candidates.length + ' — ' + c.symbol.toUpperCase());
+    const retryQueue = [];
+    const queue = candidates.slice();
+    for (let i = 0; i < queue.length; i++) {
+      const c = queue[i];
+      const isSweep = !!c._retry;
+      setLoad(isSweep
+        ? ('กวาดซ้ำตัวที่พลาด — ' + c.symbol.toUpperCase())
+        : ('คำนวณ CDC จริง ' + (i+1) + '/' + candidates.length + ' — ' + c.symbol.toUpperCase()));
       try {
-        const hr = await cgFetch('https://api.coingecko.com/api/v3/coins/' + c.id + '/market_chart?vs_currency=usd&days=365', 3, (c.symbol||c.id).toUpperCase());
-        if (!hr || !hr.ok) { scanStats.failed++; }
-        if (hr && hr.ok) {
+        const got = await getChart(c.id, (c.symbol||c.id).toUpperCase(), 3);
+        if (!got && !isSweep) { retryQueue.push(c); }
+        if (!got && isSweep) { scanStats.failed++; }
+        if (got) {
           scanStats.fetched++;
-          const hd = await hr.json();
+          if (got.cached) scanStats.cached++;
+          const hd = got.data;
           const closes = hd.prices.map(p => p[1]);
           const cdc = cdcStatus(closes);
           const wk = cdc ? weeklyTrend(hd.prices) : null;
@@ -856,7 +911,14 @@ async function scanCoins() {
           }
         }
       } catch(e) { scanStats.failed++; }
-      if (i < candidates.length - 1) await cgPace();   // ชะลอเองถ้าเจอ 429 ระหว่างทาง
+      // จบรอบแรก -> พักให้เน็ตฟื้น แล้วกวาดตัวที่พลาดอีกครั้ง
+      if (i === candidates.length - 1 && retryQueue.length) {
+        setLoad('พักแล้วลองตัวที่พลาดอีกรอบ (' + retryQueue.length + ' ตัว)...');
+        await cgWait(3000);
+        retryQueue.forEach(rc => { rc._retry = true; queue.push(rc); });
+        retryQueue.length = 0;
+      }
+      if (i < queue.length - 1) await cgPace();
     }
     scanStats.hits429 = cgState.hits429;
     scanStats.errors = cgState.errors;
