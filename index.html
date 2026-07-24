@@ -443,16 +443,38 @@ function saveCgKey() {
   document.getElementById('cg-key-ok').style.display = k ? 'block' : 'none';
 }
 
+// ── สถานะการยิง CoinGecko: ยิ่งโดนบล็อก ยิ่งชะลอเองอัตโนมัติ ──
+let cgState = { hits429: 0, hardFail: 0, delayMs: 2200 };
+const CG_DELAY_MIN = 2200;
+const CG_DELAY_MAX = 6500;
+function cgWait(ms) { return new Promise(r => setTimeout(r, ms)); }
+function cgPace() { return cgWait(cgState.delayMs); }   // เว้นจังหวะตามสถานะปัจจุบัน
+function resetCgState() { cgState = { hits429: 0, hardFail: 0, delayMs: CG_DELAY_MIN }; }
+
 async function cgFetch(url, tries) {
   tries = tries || 3;
   for (let t = 0; t < tries; t++) {
+    const isLast = t === tries - 1;
     try {
       const r = await fetch(url, cgKey ? {headers:{'x-cg-demo-api-key':cgKey}} : undefined);
       if (r.ok) return r;
-      if (r.status === 429) { await new Promise(x => setTimeout(x, 4000 * (t+1))); continue; }
-      return r;
-    } catch(e) { await new Promise(x => setTimeout(x, 3000 * (t+1))); }
+      // 429 = โดนบล็อก, 5xx = ฝั่งเขาพัง -> ทั้งคู่ retry ได้
+      if (r.status === 429 || r.status >= 500) {
+        if (r.status === 429) {
+          cgState.hits429++;
+          cgState.delayMs = Math.min(CG_DELAY_MAX, cgState.delayMs + 800); // ชะลอตัวที่เหลือทั้งสแกน
+        }
+        if (isLast) { cgState.hardFail++; return null; }   // เดิม: sleep ทิ้งฟรี 8 วิ แล้วค่อย return null
+        await cgWait(4000 * (t + 1));
+        continue;
+      }
+      return r;   // 401/404 = retry ไปก็ไม่ช่วย ส่งกลับให้ caller อ่าน status เอง
+    } catch(e) {
+      if (isLast) { cgState.hardFail++; return null; }
+      await cgWait(3000 * (t + 1));
+    }
   }
+  cgState.hardFail++;
   return null;
 }
 function calcEMA(values, period) {
@@ -598,7 +620,7 @@ let cooldownTimer = null;
 // ── ตัวนับผลสแกน: แยกให้ออกว่า "ตลาดไม่มีสัญญาณ" กับ "สแกนพัง/โดน rate limit" ──
 let scanStats = null;
 function newScanStats() {
-  return { universe: 0, shortlist: 0, fetched: 0, failed: 0, noCdc: 0, analyzed: 0, passed: 0, long: 0, short: 0, gold: false, btc: false };
+  return { universe: 0, shortlist: 0, fetched: 0, failed: 0, noCdc: 0, analyzed: 0, passed: 0, long: 0, short: 0, gold: false, btc: false, hits429: 0, noKey: !cgKey };
 }
 function renderScanDiag(s, dt) {
   const el = document.getElementById('scan-diag');
@@ -611,9 +633,32 @@ function renderScanDiag(s, dt) {
   if (s.failed) parts.push('⚠️ ดึงข้อมูลไม่สำเร็จ ' + s.failed);
   parts.push('ทอง ' + (s.gold ? '✓' : '✕') + ' · BTC ' + (s.btc ? '✓' : '✕'));
   parts.push(t);
-  el.textContent = parts.join(' · ');
-  const bad = (s.failed||0) > 0 || !s.gold || !s.btc;
-  el.style.color = bad ? 'var(--amb)' : 'var(--tx3)';
+
+  // ── ผลสแกนเชื่อถือได้แค่ไหน ──
+  const shortlist = s.shortlist || 0;
+  const failRate = shortlist ? (s.failed || 0) / shortlist : 0;
+  const banners = [];
+
+  if (!s.btc) {
+    banners.push({ bg:'#7f1d1d', txt:'⛔ ไม่มีข้อมูล BTC — สแกนนี้ไม่มีตัวกรองตลาดใหญ่ อย่าเพิ่งเข้าไม้ กดสแกนใหม่' });
+  }
+  if (failRate > 0.30) {
+    banners.push({ bg:'#7c2d12', txt:'⚠️ ผลสแกนไม่สมบูรณ์ — ดึงไม่สำเร็จ ' + s.failed + '/' + shortlist +
+      ' (' + Math.round(failRate*100) + '%) อาจมีสัญญาณที่ดีกว่าในตัวที่หายไป สแกนใหม่ก่อนตัดสินใจ' });
+  }
+  if (s.noKey && (s.hits429 || s.failed)) {
+    banners.push({ bg:'#78350f', txt:'🔑 ยังไม่ได้ใส่ CoinGecko Demo Key — โควตาฟรีต่ำมาก ใส่คีย์ที่แท็บ ⚙️ แล้วปัญหานี้จะหายไปเกือบหมด' });
+  }
+
+  const bannerHtml = banners.map(b =>
+    '<div style="background:' + b.bg + ';color:#fff;padding:11px 13px;border-radius:10px;margin-bottom:8px;' +
+    'font-weight:600;line-height:1.5;font-size:13px">' + b.txt + '</div>'
+  ).join('');
+
+  el.innerHTML = bannerHtml + '<div style="color:' +
+    ((s.failed||0) > 0 || !s.gold || !s.btc ? 'var(--amb)' : 'var(--tx3)') + '">' +
+    parts.join(' · ') + '</div>';
+  el.style.color = '';
   el.style.display = 'block';
 }
 function startCooldownCountdown() {
@@ -645,6 +690,7 @@ async function scanCoins() {
   el('scan-error').style.display = 'none';
   el('scan-summary').style.display = 'none';
   if (el('scan-diag')) el('scan-diag').style.display = 'none';
+  resetCgState();
   scanStats = newScanStats();
   el('coin-list').innerHTML = '';
   el('scan-loading').style.display = 'block';
@@ -673,7 +719,30 @@ async function scanCoins() {
     scanStats.shortlist = candidates.length;
     if (!candidates.length) throw new Error('วันนี้ไม่มีเหรียญเข้าเงื่อนไข ลองพรุ่งนี้ครับ');
 
-    setLoad('วเคราะห์ทองคำก่อน...');
+    await cgPace();   // เดิมยิง markets -> ทอง ติดกันไม่เว้นเลย เลยโดน 429 ตั้งแต่ตัวแรกๆ
+
+    // ── BTC มาก่อนทอง: เป็นตัวกรองหลัก ต้องได้ตอนโควตายังสด ──
+    setLoad('เช็คสภาพตลาดใหญ่ (BTC)...');
+    let btcCdc = null, btcWeekly = null;
+    const loadBtc = async () => {
+      const bhr = await cgFetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily');
+      if (!bhr || !bhr.ok) return false;
+      const bhd = await bhr.json();
+      btcCdc = cdcStatus(bhd.prices.map(p => p[1]));
+      btcWeekly = weeklyTrend(bhd.prices);
+      if (btcCdc && btcWeekly) btcCdc.weekly = btcWeekly.status;
+      scanStats.btc = !!btcCdc;
+      return !!btcCdc;
+    };
+    try { await loadBtc(); } catch(e) {}
+    if (!scanStats.btc) {   // ตัวกรองหลักพลาดไม่ได้ — พักยาวแล้วลองอีกรอบ
+      setLoad('BTC ดึงไม่ผ่าน กำลังพักแล้วลองใหม่...');
+      await cgWait(9000);
+      try { await loadBtc(); } catch(e) {}
+    }
+    await cgPace();
+
+    setLoad('วิเคราะห์ทองคำ...');
     let goldCloses = null, goldCur = null, goldCdc = null, goldWeekly = null, goldLevels = null;
     try {
       const ghr = await cgFetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=365&interval=daily');
@@ -687,21 +756,7 @@ async function scanCoins() {
         scanStats.gold = !!goldCdc;
       }
     } catch(e) {}
-    await new Promise(r => setTimeout(r, 1500));
-
-    setLoad('เช็คสภาพตลาดใหญ่ (BTC)...');
-    let btcCdc = null, btcWeekly = null;
-    try {
-      const bhr = await cgFetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily');
-      if (bhr && bhr.ok) {
-        const bhd = await bhr.json();
-        btcCdc = cdcStatus(bhd.prices.map(p => p[1]));
-        btcWeekly = weeklyTrend(bhd.prices);
-        if (btcCdc && btcWeekly) btcCdc.weekly = btcWeekly.status;
-        scanStats.btc = !!btcCdc;
-      }
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 1500));
+    await cgPace();
 
     const analyzed = [];
     for (let i = 0; i < candidates.length; i++) {
@@ -746,8 +801,9 @@ async function scanCoins() {
           }
         }
       } catch(e) { scanStats.failed++; }
-      await new Promise(r => setTimeout(r, 2200));
+      if (i < candidates.length - 1) await cgPace();   // ชะลอเองถ้าเจอ 429 ระหว่างทาง
     }
+    scanStats.hits429 = cgState.hits429;
 
     const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1, GREEN: 2};
     const BIGCAP_GREEN_MAXBARS = 5; // เหรียญใหญ่ยอมรับ GREEN ที่ตัดมายังไม่เกินกี่แท่ง (ปรับเลขนี้ได้)
@@ -765,7 +821,17 @@ async function scanCoins() {
     scanStats.short = qualifiedShort.length;
     scanStats.passed = qualified.length + qualifiedShort.length;
     renderScanDiag(scanStats, new Date());
-    if (!qualified.length && !qualifiedShort.length && !goldCdc) throw new Error('วันนี้ไม่มีเหรียญ CDC เขียวสดหรือแดงสดเลย — ' + (btcCdc && btcCdc.status === 'RED' ? 'BTC เองก็ยังแดง ' : '') + 'ถือเงินสดรอคอ position ที่ถูกต้องครับ');
+    // "ไม่มีสัญญาณ" กับ "สแกนพัง" ต้องแยกกันให้ชัด ห้ามสรุปว่าตลาดเงียบทั้งที่ดึงข้อมูลไม่ครบ
+    const failRate = candidates.length ? scanStats.failed / candidates.length : 0;
+    if (!qualified.length && !qualifiedShort.length && !goldCdc) {
+      if (failRate > 0.30 || !scanStats.btc) {
+        throw new Error('ยังสรุปไม่ได้ — สแกนได้แค่ ' + scanStats.fetched + '/' + candidates.length +
+          ' เหรียญ' + (scanStats.btc ? '' : ' และดึง BTC ไม่ผ่าน') +
+          (scanStats.noKey ? ' · ใส่ CoinGecko Demo Key ที่แท็บ ⚙️ จะช่วยได้มาก' : ' · รอ 1-2 นาทีแล้วสแกนใหม่') +
+          ' — อย่าเพิ่งสรุปว่าตลาดไม่มีสัญญาณ');
+      }
+      throw new Error('วันนี้ไม่มีเหรียญ CDC เขียวสดหรือแดงสดเลย — ' + (btcCdc && btcCdc.status === 'RED' ? 'BTC เองก็ยังแดง ' : '') + 'ถือเงินสดรอคอ position ที่ถูกต้องครับ');
+    }
 
     setLoad('Rex กำลังสรปแผน...');
     const goldStatusTH = goldCdc ? (goldCdc.status==='RED'||goldCdc.status==='FRESH_RED'?'แดง':goldCdc.status==='NEAR_CROSS'?'รอยนยัน':'เขียว') : 'รอยืนยัน';
