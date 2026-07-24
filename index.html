@@ -443,41 +443,56 @@ function saveCgKey() {
   document.getElementById('cg-key-ok').style.display = k ? 'block' : 'none';
 }
 
-// ── สถานะการยิง CoinGecko: ยิ่งโดนบล็อก ยิ่งชะลอเองอัตโนมัติ ──
-let cgState = { hits429: 0, hardFail: 0, delayMs: 2200, errors: [] };
-const CG_DELAY_MIN = 2200;
-const CG_DELAY_MAX = 6500;
+// ── สถานะการยิง CoinGecko ──
+// หมายเหตุ: Demo key = 100 ครั้ง/นาที สแกนนึงใช้ ~17 ครั้ง เพราะฉะนั้นไม่ต้องหน่วงนาน
+// หน่วงนาน = สแกนยืดเป็น 40 วิ = โดนมือถือ suspend หน้าเว็บระหว่างทาง (NETWORK fail)
+let cgState = { hits429: 0, hardFail: 0, delayMs: 800, errors: [], backgrounded: false };
+const CG_DELAY_MIN = 800;
+const CG_DELAY_MAX = 5000;
+const CG_TIMEOUT_MS = 15000;   // ไม่ให้ request ค้างยาว ตัดแล้ว retry เร็วกว่า
 function cgWait(ms) { return new Promise(r => setTimeout(r, ms)); }
-function cgPace() { return cgWait(cgState.delayMs); }   // เว้นจังหวะตามสถานะปัจจุบัน
-function resetCgState() { cgState = { hits429: 0, hardFail: 0, delayMs: CG_DELAY_MIN, errors: [] }; }
+function cgPace() { return cgWait(cgState.delayMs); }
+function resetCgState() { cgState = { hits429: 0, hardFail: 0, delayMs: CG_DELAY_MIN, errors: [], backgrounded: false }; }
 function cgLogFail(label, status, body) {
   cgState.errors.push({ label: label || '?', status: status, body: (body || '').slice(0, 120) });
   console.warn('[cgFetch] ' + label + ' -> ' + status + ' ' + (body || ''));
 }
 
+// จับว่าผู้ใช้สลับแอป/ล็อกจอระหว่างสแกนไหม — iOS จะฆ่า fetch ที่ค้างอยู่ทันที
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) cgState.backgrounded = true;
+});
+
 async function cgFetch(url, tries, label) {
-  tries = tries || 3;
+  tries = tries || 4;
   for (let t = 0; t < tries; t++) {
     const isLast = t === tries - 1;
+    let timer = null;
     try {
-      const r = await fetch(url, cgKey ? {headers:{'x-cg-demo-api-key':cgKey}} : undefined);
+      const ctrl = new AbortController();
+      timer = setTimeout(() => ctrl.abort(), CG_TIMEOUT_MS);
+      const r = await fetch(url, {
+        signal: ctrl.signal,
+        headers: cgKey ? {'x-cg-demo-api-key': cgKey} : undefined
+      });
+      clearTimeout(timer);
       if (r.ok) return r;
-      // 429 = โดนบล็อก, 5xx = ฝั่งเขาพัง -> ทั้งคู่ retry ได้
       if (r.status === 429 || r.status >= 500) {
         if (r.status === 429) {
           cgState.hits429++;
-          cgState.delayMs = Math.min(CG_DELAY_MAX, cgState.delayMs + 800); // ชะลอตัวที่เหลือทั้งสแกน
+          cgState.delayMs = Math.min(CG_DELAY_MAX, cgState.delayMs + 800);
         }
         if (isLast) { cgState.hardFail++; cgLogFail(label, r.status, await r.text().catch(()=>'')); return null; }
-        await cgWait(4000 * (t + 1));
+        await cgWait(2500 * (t + 1));
         continue;
       }
-      // 401/403/404 = retry ไปก็ไม่ช่วย แต่ต้องรู้ว่าเป็นอะไร
       cgLogFail(label, r.status, await r.clone().text().catch(()=>''));
       return r;
     } catch(e) {
-      if (isLast) { cgState.hardFail++; cgLogFail(label, 'NETWORK', e.message); return null; }
-      await cgWait(3000 * (t + 1));
+      if (timer) clearTimeout(timer);
+      // NETWORK/timeout = ปัญหาชั่วคราว ลองใหม่ถี่ๆ ดีกว่ารอนาน
+      if (isLast) { cgState.hardFail++; cgLogFail(label, e.name === 'AbortError' ? 'TIMEOUT' : 'NETWORK', e.message); return null; }
+      await cgWait(1200 * (t + 1));
     }
   }
   cgState.hardFail++;
@@ -626,7 +641,7 @@ let cooldownTimer = null;
 // ── ตัวนับผลสแกน: แยกให้ออกว่า "ตลาดไม่มีสัญญาณ" กับ "สแกนพัง/โดน rate limit" ──
 let scanStats = null;
 function newScanStats() {
-  return { universe: 0, shortlist: 0, fetched: 0, failed: 0, noCdc: 0, analyzed: 0, passed: 0, long: 0, short: 0, gold: false, btc: false, hits429: 0, noKey: !cgKey, errors: [] };
+  return { universe: 0, shortlist: 0, fetched: 0, failed: 0, noCdc: 0, analyzed: 0, passed: 0, long: 0, short: 0, gold: false, btc: false, hits429: 0, noKey: !cgKey, errors: [], backgrounded: false };
 }
 function renderScanDiag(s, dt) {
   const el = document.getElementById('scan-diag');
@@ -654,6 +669,10 @@ function renderScanDiag(s, dt) {
   }
   if (s.noKey && (s.hits429 || s.failed)) {
     banners.push({ bg:'#78350f', txt:'🔑 ยังไม่ได้ใส่ CoinGecko Demo Key — โควตาฟรีต่ำมาก ใส่คีย์ที่แท็บ ⚙️ แล้วปัญหานี้จะหายไปเกือบหมด' });
+  }
+
+  if (s.backgrounded && s.failed) {
+    banners.push({ bg:'#78350f', txt:'📱 คุณสลับแอป/ล็อกจอระหว่างสแกน — มือถือจะตัดการเชื่อมต่อที่ค้างอยู่ทันที นี่คือสาเหตุที่ดึงไม่สำเร็จ กดสแกนใหม่แล้วเปิดหน้านี้ค้างไว้จนจบ' });
   }
 
   // ── บอกโค้ด error จริง ไม่ต้องเดาว่าเป็น rate limit หรืออย่างอื่น ──
@@ -756,7 +775,7 @@ async function scanCoins() {
     try { await loadBtc(); } catch(e) {}
     if (!scanStats.btc) {   // ตัวกรองหลักพลาดไม่ได้ — พักยาวแล้วลองอีกรอบ
       setLoad('BTC ดึงไม่ผ่าน กำลังพักแล้วลองใหม่...');
-      await cgWait(9000);
+      await cgWait(4000);
       try { await loadBtc(); } catch(e) {}
     }
     await cgPace();
@@ -824,6 +843,7 @@ async function scanCoins() {
     }
     scanStats.hits429 = cgState.hits429;
     scanStats.errors = cgState.errors;
+    scanStats.backgrounded = cgState.backgrounded;
 
     const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1, GREEN: 2};
     const BIGCAP_GREEN_MAXBARS = 5; // เหรียญใหญ่ยอมรับ GREEN ที่ตัดมายังไม่เกินกี่แท่ง (ปรับเลขนี้ได้)
