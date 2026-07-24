@@ -444,14 +444,18 @@ function saveCgKey() {
 }
 
 // ── สถานะการยิง CoinGecko: ยิ่งโดนบล็อก ยิ่งชะลอเองอัตโนมัติ ──
-let cgState = { hits429: 0, hardFail: 0, delayMs: 2200 };
+let cgState = { hits429: 0, hardFail: 0, delayMs: 2200, errors: [] };
 const CG_DELAY_MIN = 2200;
 const CG_DELAY_MAX = 6500;
 function cgWait(ms) { return new Promise(r => setTimeout(r, ms)); }
 function cgPace() { return cgWait(cgState.delayMs); }   // เว้นจังหวะตามสถานะปัจจุบัน
-function resetCgState() { cgState = { hits429: 0, hardFail: 0, delayMs: CG_DELAY_MIN }; }
+function resetCgState() { cgState = { hits429: 0, hardFail: 0, delayMs: CG_DELAY_MIN, errors: [] }; }
+function cgLogFail(label, status, body) {
+  cgState.errors.push({ label: label || '?', status: status, body: (body || '').slice(0, 120) });
+  console.warn('[cgFetch] ' + label + ' -> ' + status + ' ' + (body || ''));
+}
 
-async function cgFetch(url, tries) {
+async function cgFetch(url, tries, label) {
   tries = tries || 3;
   for (let t = 0; t < tries; t++) {
     const isLast = t === tries - 1;
@@ -464,13 +468,15 @@ async function cgFetch(url, tries) {
           cgState.hits429++;
           cgState.delayMs = Math.min(CG_DELAY_MAX, cgState.delayMs + 800); // ชะลอตัวที่เหลือทั้งสแกน
         }
-        if (isLast) { cgState.hardFail++; return null; }   // เดิม: sleep ทิ้งฟรี 8 วิ แล้วค่อย return null
+        if (isLast) { cgState.hardFail++; cgLogFail(label, r.status, await r.text().catch(()=>'')); return null; }
         await cgWait(4000 * (t + 1));
         continue;
       }
-      return r;   // 401/404 = retry ไปก็ไม่ช่วย ส่งกลับให้ caller อ่าน status เอง
+      // 401/403/404 = retry ไปก็ไม่ช่วย แต่ต้องรู้ว่าเป็นอะไร
+      cgLogFail(label, r.status, await r.clone().text().catch(()=>''));
+      return r;
     } catch(e) {
-      if (isLast) { cgState.hardFail++; return null; }
+      if (isLast) { cgState.hardFail++; cgLogFail(label, 'NETWORK', e.message); return null; }
       await cgWait(3000 * (t + 1));
     }
   }
@@ -620,7 +626,7 @@ let cooldownTimer = null;
 // ── ตัวนับผลสแกน: แยกให้ออกว่า "ตลาดไม่มีสัญญาณ" กับ "สแกนพัง/โดน rate limit" ──
 let scanStats = null;
 function newScanStats() {
-  return { universe: 0, shortlist: 0, fetched: 0, failed: 0, noCdc: 0, analyzed: 0, passed: 0, long: 0, short: 0, gold: false, btc: false, hits429: 0, noKey: !cgKey };
+  return { universe: 0, shortlist: 0, fetched: 0, failed: 0, noCdc: 0, analyzed: 0, passed: 0, long: 0, short: 0, gold: false, btc: false, hits429: 0, noKey: !cgKey, errors: [] };
 }
 function renderScanDiag(s, dt) {
   const el = document.getElementById('scan-diag');
@@ -650,6 +656,19 @@ function renderScanDiag(s, dt) {
     banners.push({ bg:'#78350f', txt:'🔑 ยังไม่ได้ใส่ CoinGecko Demo Key — โควตาฟรีต่ำมาก ใส่คีย์ที่แท็บ ⚙️ แล้วปัญหานี้จะหายไปเกือบหมด' });
   }
 
+  // ── บอกโค้ด error จริง ไม่ต้องเดาว่าเป็น rate limit หรืออย่างอื่น ──
+  let errLine = '';
+  if (s.errors && s.errors.length) {
+    const byStatus = {};
+    s.errors.forEach(e => { byStatus[e.status] = (byStatus[e.status] || 0) + 1; });
+    const codes = Object.keys(byStatus).map(k => k + ' ×' + byStatus[k]).join(' · ');
+    const sample = s.errors[0];
+    errLine = '<div style="color:var(--amb);font-size:12px;margin-top:6px;line-height:1.5">' +
+      'สาเหตุจริง: ' + codes +
+      (sample.body ? '<br><span style="opacity:.75">' + sample.label + ': ' +
+        sample.body.replace(/[<>]/g, '') + '</span>' : '') + '</div>';
+  }
+
   const bannerHtml = banners.map(b =>
     '<div style="background:' + b.bg + ';color:#fff;padding:11px 13px;border-radius:10px;margin-bottom:8px;' +
     'font-weight:600;line-height:1.5;font-size:13px">' + b.txt + '</div>'
@@ -657,7 +676,7 @@ function renderScanDiag(s, dt) {
 
   el.innerHTML = bannerHtml + '<div style="color:' +
     ((s.failed||0) > 0 || !s.gold || !s.btc ? 'var(--amb)' : 'var(--tx3)') + '">' +
-    parts.join(' · ') + '</div>';
+    parts.join(' · ') + '</div>' + errLine;
   el.style.color = '';
   el.style.display = 'block';
 }
@@ -725,7 +744,7 @@ async function scanCoins() {
     setLoad('เช็คสภาพตลาดใหญ่ (BTC)...');
     let btcCdc = null, btcWeekly = null;
     const loadBtc = async () => {
-      const bhr = await cgFetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily');
+      const bhr = await cgFetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365', 3, 'BTC');
       if (!bhr || !bhr.ok) return false;
       const bhd = await bhr.json();
       btcCdc = cdcStatus(bhd.prices.map(p => p[1]));
@@ -745,7 +764,7 @@ async function scanCoins() {
     setLoad('วิเคราะห์ทองคำ...');
     let goldCloses = null, goldCur = null, goldCdc = null, goldWeekly = null, goldLevels = null;
     try {
-      const ghr = await cgFetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=365&interval=daily');
+      const ghr = await cgFetch('https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=365', 3, 'GOLD');
       if (ghr && ghr.ok) {
         const ghd = await ghr.json();
         goldCloses = ghd.prices.map(p => p[1]);
@@ -763,7 +782,7 @@ async function scanCoins() {
       const c = candidates[i];
       setLoad('คำนวณ CDC จริง ' + (i+1) + '/' + candidates.length + ' — ' + c.symbol.toUpperCase());
       try {
-        const hr = await cgFetch('https://api.coingecko.com/api/v3/coins/' + c.id + '/market_chart?vs_currency=usd&days=365&interval=daily', 2);
+        const hr = await cgFetch('https://api.coingecko.com/api/v3/coins/' + c.id + '/market_chart?vs_currency=usd&days=365', 3, (c.symbol||c.id).toUpperCase());
         if (!hr || !hr.ok) { scanStats.failed++; }
         if (hr && hr.ok) {
           scanStats.fetched++;
@@ -804,6 +823,7 @@ async function scanCoins() {
       if (i < candidates.length - 1) await cgPace();   // ชะลอเองถ้าเจอ 429 ระหว่างทาง
     }
     scanStats.hits429 = cgState.hits429;
+    scanStats.errors = cgState.errors;
 
     const RANKED = {FRESH_GREEN: 0, NEAR_CROSS: 1, GREEN: 2};
     const BIGCAP_GREEN_MAXBARS = 5; // เหรียญใหญ่ยอมรับ GREEN ที่ตัดมายังไม่เกินกี่แท่ง (ปรับเลขนี้ได้)
@@ -1063,7 +1083,7 @@ async function loadRexPage() {
     else if (bc<-3) { se.textContent='CAUTION'; se.className='sig-val dn'; }
     else if (bc<-1) { se.textContent='SELL'; se.className='sig-val dn'; }
     else { se.textContent='HOLD'; se.className='sig-val warn'; }
-    const hr = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily');
+    const hr = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30');
     if (hr.ok) {
       const hd = await hr.json();
       const prices = hd.prices;
