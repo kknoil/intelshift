@@ -575,6 +575,23 @@ async function cgFetch(url, tries, label) {
   cgState.hardFail++;
   return null;
 }
+// กรองจุดข้อมูลตัวสุดท้ายออก ถ้ายังไม่ใช่แท่ง Daily ที่ปิดจริง
+// CoinGecko: จุดข้อมูลปกติ record ที่ 00:00 UTC ของแต่ละวัน แต่จุดล่าสุดสุดจะเป็นราคาสด
+// ที่อัปเดตทุก 30 วินาที (ไม่ใช่ราคาปิด) — ถ้าเอามาคำนวณ EMA/CDC ตรงๆ จะได้สัญญาณหลอก
+// ที่ยัง "ไม่ยืนยัน" จริง ขัดกับกฎเหล็ก "รอปิดแท่ง Daily ก่อนเข้า"
+function filterConfirmedCloses(pricePairs) {
+  if (!pricePairs || !pricePairs.length) return [];
+  const DAY_MS = 86400000;
+  const CONFIRM_BUFFER_MS = 10 * 60 * 1000; // CoinGecko ยืนยันแท่งที่ปิดแล้วหลังเที่ยงคืน UTC ~10 นาที
+  const out = pricePairs.slice();
+  const last = out[out.length - 1];
+  const lastTs = last[0];
+  const alignedToMidnightUTC = (lastTs % DAY_MS) === 0;
+  const enoughTimePassed = (Date.now() - lastTs) >= CONFIRM_BUFFER_MS;
+  // ตัดจุดสุดท้ายทิ้ง ถ้ายังไม่ใช่แท่งที่ปิดตรง 00:00 UTC จริง หรือปิดมาไม่ถึง 10 นาที
+  if (!(alignedToMidnightUTC && enoughTimePassed)) out.pop();
+  return out;
+}
 function calcEMA(values, period) {
   const k = 2 / (period + 1);
   let e = values.slice(0, period).reduce((a, b) => a + b, 0) / period;
@@ -884,8 +901,9 @@ async function scanCoins() {
       if (!got) return false;
       if (got.cached) scanStats.cached++;
       const bhd = got.data;
-      btcCdc = cdcStatus(bhd.prices.map(p => p[1]));
-      btcWeekly = weeklyTrend(bhd.prices);
+      const btcConfirmed = filterConfirmedCloses(bhd.prices);
+      btcCdc = cdcStatus(btcConfirmed.map(p => p[1]));
+      btcWeekly = weeklyTrend(btcConfirmed);
       if (btcCdc && btcWeekly) btcCdc.weekly = btcWeekly.status;
       scanStats.btc = !!btcCdc;
       return !!btcCdc;
@@ -904,10 +922,12 @@ async function scanCoins() {
       if (gGot) {
         if (gGot.cached) scanStats.cached++;
         const ghd = gGot.data;
-        goldCloses = ghd.prices.map(p => p[1]);
-        goldCur = +goldCloses[goldCloses.length-1].toFixed(1);
+        const goldRawCloses = ghd.prices.map(p => p[1]);
+        goldCur = +goldRawCloses[goldRawCloses.length-1].toFixed(1); // ราคาสด ใช้แค่แสดงผล
+        const goldConfirmed = filterConfirmedCloses(ghd.prices);
+        goldCloses = goldConfirmed.map(p => p[1]); // ใช้แท่งปิดแล้วจริงเท่านั้นสำหรับคำนวณสัญญาณ
         goldCdc = cdcStatus(goldCloses);
-        goldWeekly = weeklyTrend(ghd.prices);
+        goldWeekly = weeklyTrend(goldConfirmed);
         if (goldCdc) goldLevels = buildLevels(goldCur, calcATR(goldCloses, 14), goldCdc.ema12, goldCdc.ema26, goldCdc.status);
         scanStats.gold = !!goldCdc;
       }
@@ -930,9 +950,10 @@ async function scanCoins() {
           scanStats.fetched++;
           if (got.cached) scanStats.cached++;
           const hd = got.data;
-          const closes = hd.prices.map(p => p[1]);
+          const hdConfirmed = filterConfirmedCloses(hd.prices);
+          const closes = hdConfirmed.map(p => p[1]); // ใช้แท่งปิดแล้วจริงเท่านั้นสำหรับคำนวณสัญญาณ
           const cdc = cdcStatus(closes);
-          const wk = cdc ? weeklyTrend(hd.prices) : null;
+          const wk = cdc ? weeklyTrend(hdConfirmed) : null;
           const trend = cdc ? classifyTrend(cdc.status, wk) : null;
           const atr14 = calcATR(closes, 14);
           const lv = cdc ? buildLevels(c.current_price, atr14, cdc.ema12, cdc.ema26, cdc.status) : null;
