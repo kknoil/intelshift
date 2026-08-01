@@ -49,6 +49,21 @@ async function getChart(id) {
 }
 
 /* ---------- ตัวชี้วัด (ยกมาจาก index.html ให้ตรงกันเป๊ะ) ---------- */
+// กรองจุดข้อมูลตัวสุดท้ายออก ถ้ายังไม่ใช่แท่ง Daily ที่ปิดจริง
+// CoinGecko: จุดล่าสุดสุดจะเป็นราคาสดที่อัปเดตทุก 30 วินาที ไม่ใช่ราคาปิด
+// ถ้าเอามาคำนวณ EMA/CDC ตรงๆ จะได้สัญญาณหลอกที่ยัง "ไม่ยืนยัน" จริง
+// ขัดกับกฎเหล็ก "รอปิดแท่ง Daily ก่อนเข้า"
+function filterConfirmedCloses(pricePairs) {
+  if (!pricePairs || !pricePairs.length) return [];
+  const DAY_MS = 86400000;
+  const CONFIRM_BUFFER_MS = 10 * 60 * 1000; // CoinGecko ยืนยันแท่งที่ปิดแล้วหลังเที่ยงคืน UTC ~10 นาที
+  const out = pricePairs.slice();
+  const lastTs = out[out.length - 1][0];
+  const alignedToMidnightUTC = (lastTs % DAY_MS) === 0;
+  const enoughTimePassed = (Date.now() - lastTs) >= CONFIRM_BUFFER_MS;
+  if (!(alignedToMidnightUTC && enoughTimePassed)) out.pop();
+  return out;
+}
 function calcEMA(values, period) {
   const k = 2 / (period + 1);
   let e = values.slice(0, period).reduce((a, b) => a + b, 0) / period;
@@ -204,20 +219,23 @@ exports.handler = async function () {
 
     let btc = null;
     if (btcChart) {
-      const c = cdcStatus(btcChart.prices.map(p => p[1]));
-      const w = weeklyTrend(btcChart.prices);
+      const btcConfirmed = filterConfirmedCloses(btcChart.prices);
+      const c = cdcStatus(btcConfirmed.map(p => p[1]));
+      const w = weeklyTrend(btcConfirmed);
       if (c) { c.weekly = w ? w.status : null; btc = c; }
     }
 
     let gold = null;
     if (goldChart) {
-      const closes = goldChart.prices.map(p => p[1]);
+      const goldRawCloses = goldChart.prices.map(p => p[1]);
+      const goldConfirmed = filterConfirmedCloses(goldChart.prices);
+      const closes = goldConfirmed.map(p => p[1]);
       const c = cdcStatus(closes);
       if (c) {
-        const cur = +closes[closes.length - 1].toFixed(1);
+        const cur = +goldRawCloses[goldRawCloses.length - 1].toFixed(1); // ราคาสด ใช้แค่แสดงผล
         gold = {
           cur, cdc: c,
-          weekly: weeklyTrend(goldChart.prices),
+          weekly: weeklyTrend(goldConfirmed),
           levels: buildLevels(cur, calcATR(closes, 14), c.ema12, c.ema26, c.status)
         };
       }
@@ -227,10 +245,11 @@ exports.handler = async function () {
     const results = await mapLimit(candidates, 4, async (c) => {
       const chart = await getChart(c.id);
       if (!chart) return { id: c.id, failed: true };
-      const closes = chart.prices.map(p => p[1]);
+      const confirmed = filterConfirmedCloses(chart.prices);
+      const closes = confirmed.map(p => p[1]);
       const cdc = cdcStatus(closes);
       if (!cdc) return { id: c.id, noCdc: true };
-      const wk = weeklyTrend(chart.prices);
+      const wk = weeklyTrend(confirmed);
       const trend = classifyTrend(cdc.status, wk);
       const lv = buildLevels(c.current_price, calcATR(closes, 14), cdc.ema12, cdc.ema26, cdc.status);
       let volConfirm = null;
@@ -261,7 +280,7 @@ exports.handler = async function () {
     return {
       statusCode: 200, headers,
       body: JSON.stringify({
-        ok: true, ts: Date.now(),
+        ok: true, ts: Date.now(), build: 'b9-confirmed-close',
         universe, shortlist: candidates.length,
         fetched: candidates.length - failed, failed, noCdc,
         btc, gold, coins
