@@ -517,7 +517,7 @@ async function tryServerScan() {
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 45000);   // เซิร์ฟเวอร์ต้องดึง 16 เหรียญ ให้เวลาหน่อย
-    const r = await fetch('/.netlify/functions/scan', { signal: ctrl.signal });
+    const r = await fetch('/api/scan', { signal: ctrl.signal });
     clearTimeout(timer);
     if (!r.ok) { cgLogFail('SERVER', r.status, ''); return null; }
     const j = await r.json();
