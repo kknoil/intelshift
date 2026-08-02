@@ -632,21 +632,62 @@ function calcATR(closes, period) {
   for (let i = 1; i < seg.length; i++) sum += Math.abs(seg[i] - seg[i-1]);
   return (sum / period) * 1.15; // ลดจาก 1.4 — ของเดิมบวม SL/TP ไกลเกินจำเป็น
 }
-function buildLevels(price, atr, ema12, ema26, status) {
+// หา swing high/low (pivot point) จริงจากราคาปิดย้อนหลัง — ใช้เป็นฐาน SL แทน EMA26
+function findSwingLevel(closes, isHigh, lookback, pivotWindow) {
+  lookback = lookback || 30;
+  pivotWindow = pivotWindow || 2;
+  const n = closes.length - 1;
+  const start = Math.max(pivotWindow, n - lookback);
+  for (let i = n - pivotWindow; i >= start; i--) {
+    let isPivot = true;
+    for (let k = 1; k <= pivotWindow; k++) {
+      if (isHigh) {
+        if (!(closes[i] > closes[i - k] && closes[i] > closes[i + k])) { isPivot = false; break; }
+      } else {
+        if (!(closes[i] < closes[i - k] && closes[i] < closes[i + k])) { isPivot = false; break; }
+      }
+    }
+    if (isPivot) return { level: closes[i], found: true, barsAgo: n - i };
+  }
+  const seg = closes.slice(Math.max(0, n - lookback), n + 1);
+  return { level: isHigh ? Math.max(...seg) : Math.min(...seg), found: false, barsAgo: null };
+}
+
+function buildLevels(price, atr, ema12, ema26, status, closes) {
   if (!atr || !price) return null;
   const short = (status === 'FRESH_RED' || status === 'RED');
   const s = short ? -1 : 1;
   const e1 = price - s * (0.3 * atr);
   const e2 = price + s * (0.5 * atr);
   const avg = (e1 + e2) / 2;
-  const structural = short ? Math.max(ema26, price) + 0.7 * atr : Math.min(ema26, price) - 0.7 * atr; // ลดจาก 1.2x
+
+  // ฐาน SL: หา swing high/low จริงจากกราฟ (ถ้าข้อมูลพอ) แทน EMA26
+  let swing = null;
+  if (closes && closes.length >= 35) swing = findSwingLevel(closes, short, 30, 2);
+  const structuralBuffer = swing ? 0.3 : 0.7;
+  const structural = short
+    ? Math.max(swing ? swing.level : Math.max(ema26, price), price) + structuralBuffer * atr
+    : Math.min(swing ? swing.level : Math.min(ema26, price), price) - structuralBuffer * atr;
+
   const capped = avg - s * (2.0 * atr); // ลดจาก 2.5x
   const sl = short ? Math.min(structural, capped) : Math.max(structural, capped);
   const risk = Math.abs(avg - sl);
+  const tp1 = avg + s * 1.8 * risk;
+
+  // RR จริงของแต่ละไม้แยกกัน — ไม้ 1 กับไม้ 2 เข้าคนละราคา จึงมี RR ไม่เท่ากัน
+  const rrEntry1 = +(Math.abs(tp1 - e1) / Math.abs(sl - e1)).toFixed(2);
+  const rrEntry2 = +(Math.abs(tp1 - e2) / Math.abs(sl - e2)).toFixed(2);
+  const MIN_ACCEPTABLE_RR = 1.3;
+
   return {
     entry1: +e1.toPrecision(6), entry2: +e2.toPrecision(6), sl: +sl.toPrecision(6),
-    tp1: +(avg + s * 1.8 * risk).toPrecision(6), tp2: +(avg + s * 3.0 * risk).toPrecision(6),
+    tp1: +tp1.toPrecision(6), tp2: +(avg + s * 3.0 * risk).toPrecision(6),
     be: +avg.toPrecision(6), rr1: 1.8, rr2: 3.0,
+    entry1_rr: rrEntry1, entry2_rr: rrEntry2,
+    entry2_rr_warning: rrEntry2 < MIN_ACCEPTABLE_RR
+      ? ('RR จริงของไม้ 2 เพียง ' + rrEntry2 + ':1 (ต่ำกว่าเกณฑ์ ' + MIN_ACCEPTABLE_RR + ') — ถ้าไม้ 1 ไม่โดน fill แล้วเข้าแต่ไม้ 2 อย่างเดียว ไม่คุ้มเสี่ยง')
+      : null,
+    sl_source: swing ? (swing.found ? 'swing_' + (short ? 'high' : 'low') + '_' + swing.barsAgo + 'd_ago' : 'range_extreme_fallback') : 'ema26_fallback',
     atr: +atr.toPrecision(4), atr_pct: +((atr / price) * 100).toFixed(2),
     direction: short ? 'SHORT' : 'LONG'
   };
@@ -740,7 +781,7 @@ function levelBlock(lv, isShort, fmt) {
 }
 </script>
 <script>
-const BUILD_TAG = 'b10-tighter-risk';   // เปลี่ยนทุกครั้งที่แก้ ใช้เช็คว่า deploy ขึ้นจริงไหม
+const BUILD_TAG = 'b12-swing-structure';   // เปลี่ยนทุกครั้งที่แก้ ใช้เช็คว่า deploy ขึ้นจริงไหม
 const SCAN_COOLDOWN_MS = 60000; // กันยิง CoinGecko ถี่เกิน (ปรับได้ ถ้าเจอ error 429 บ่อยให้เพิ่มเป็น 90000)
 const SCAN_BTN_LABEL = '🔍 สแกนทอง + เหรียญวันนี้ (~0.5฿)';
 let cooldownTimer = null;
@@ -940,7 +981,7 @@ async function scanCoins() {
         goldCloses = goldConfirmed.map(p => p[1]); // ใช้แท่งปิดแล้วจริงเท่านั้นสำหรับคำนวณสัญญาณ
         goldCdc = cdcStatus(goldCloses);
         goldWeekly = weeklyTrend(goldConfirmed);
-        if (goldCdc) goldLevels = buildLevels(goldCur, calcATR(goldCloses, 14), goldCdc.ema12, goldCdc.ema26, goldCdc.status);
+        if (goldCdc) goldLevels = buildLevels(goldCur, calcATR(goldCloses, 14), goldCdc.ema12, goldCdc.ema26, goldCdc.status, goldCloses);
         scanStats.gold = !!goldCdc;
       }
     } catch(e) {}
@@ -967,7 +1008,7 @@ async function scanCoins() {
           const cdc = cdcStatus(closes);
           const wk = cdc ? weeklyTrend(hdConfirmed) : null;
           const atr14 = calcATR(closes, 14);
-          const lv = cdc ? buildLevels(c.current_price, atr14, cdc.ema12, cdc.ema26, cdc.status) : null;
+          const lv = cdc ? buildLevels(c.current_price, atr14, cdc.ema12, cdc.ema26, cdc.status, closes) : null;
           const trend = cdc ? classifyTrend(cdc.status, wk, lv ? lv.atr_pct : null) : null;
           let volConfirm = null;
           try {
