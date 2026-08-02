@@ -102,21 +102,66 @@ function calcATR(closes, period = 14) {
   return (sum / period) * 1.15; // ลดจาก 1.4 — ของเดิมบวม SL/TP ไกลเกินจำเป็น
 }
 
-function buildLevels(price, atr, ema12, ema26, status) {
+// หา swing high/low (pivot point) จริงจากราคาปิดย้อนหลัง — ใช้เป็นฐาน SL แทน EMA26
+// pivot high = จุดที่ราคาสูงกว่าเพื่อนบ้านซ้าย-ขวา (สัญญาณว่าเคยมีแรงขายกลับตัวที่นี่)
+// pivot low = จุดที่ราคาต่ำกว่าเพื่อนบ้านซ้าย-ขวา (สัญญาณว่าเคยมีแรงซื้อกลับตัวที่นี่)
+function findSwingLevel(closes, isHigh, lookback, pivotWindow) {
+  lookback = lookback || 30;
+  pivotWindow = pivotWindow || 2;
+  const n = closes.length - 1;
+  const start = Math.max(pivotWindow, n - lookback);
+  for (let i = n - pivotWindow; i >= start; i--) {
+    let isPivot = true;
+    for (let k = 1; k <= pivotWindow; k++) {
+      if (isHigh) {
+        if (!(closes[i] > closes[i - k] && closes[i] > closes[i + k])) { isPivot = false; break; }
+      } else {
+        if (!(closes[i] < closes[i - k] && closes[i] < closes[i + k])) { isPivot = false; break; }
+      }
+    }
+    if (isPivot) return { level: closes[i], found: true, barsAgo: n - i };
+  }
+  // ไม่เจอ pivot ชัดเจน — ใช้จุดสูงสุด/ต่ำสุดในช่วง lookback แทน (เผื่อไว้)
+  const seg = closes.slice(Math.max(0, n - lookback), n + 1);
+  return { level: isHigh ? Math.max(...seg) : Math.min(...seg), found: false, barsAgo: null };
+}
+
+function buildLevels(price, atr, ema12, ema26, status, closes) {
   if (!atr || !price) return null;
   const short = (status === 'FRESH_RED' || status === 'RED');
   const s = short ? -1 : 1;
   const e1 = price - s * (0.3 * atr);
   const e2 = price + s * (0.5 * atr);
   const avg = (e1 + e2) / 2;
-  const structural = short ? Math.max(ema26, price) + 0.7 * atr : Math.min(ema26, price) - 0.7 * atr; // ลดจาก 1.2x
+
+  // ฐาน SL: หา swing high/low จริงจากกราฟ (ถ้าข้อมูลพอ) แทน EMA26
+  let swing = null;
+  if (closes && closes.length >= 35) swing = findSwingLevel(closes, short, 30, 2);
+  const structuralBuffer = swing ? 0.3 : 0.7; // swing จริงแล้วไม่ต้องกันเผื่อเยอะเท่า EMA (ซึ่งเป็นแค่ค่าเฉลี่ย)
+  const structural = short
+    ? Math.max(swing ? swing.level : Math.max(ema26, price), price) + structuralBuffer * atr
+    : Math.min(swing ? swing.level : Math.min(ema26, price), price) - structuralBuffer * atr;
+
   const capped = avg - s * (2.0 * atr); // ลดจาก 2.5x
   const sl = short ? Math.min(structural, capped) : Math.max(structural, capped);
   const risk = Math.abs(avg - sl);
+  const tp1 = avg + s * 1.8 * risk;
+
+  // RR จริงของแต่ละไม้แยกกัน — ไม้ 1 กับไม้ 2 เข้าคนละราคา จึงมี RR ไม่เท่ากัน
+  // ถ้าไม้ 1 ไม่โดน fill แล้วเข้าแต่ไม้ 2 อย่างเดียว RR รวมที่โฆษณาไว้ (1.8) จะไม่ตรงจริง
+  const rrEntry1 = +(Math.abs(tp1 - e1) / Math.abs(sl - e1)).toFixed(2);
+  const rrEntry2 = +(Math.abs(tp1 - e2) / Math.abs(sl - e2)).toFixed(2);
+  const MIN_ACCEPTABLE_RR = 1.3;
+
   return {
     entry1: +e1.toPrecision(6), entry2: +e2.toPrecision(6), sl: +sl.toPrecision(6),
-    tp1: +(avg + s * 1.8 * risk).toPrecision(6), tp2: +(avg + s * 3.0 * risk).toPrecision(6),
+    tp1: +tp1.toPrecision(6), tp2: +(avg + s * 3.0 * risk).toPrecision(6),
     be: +avg.toPrecision(6), rr1: 1.8, rr2: 3.0,
+    entry1_rr: rrEntry1, entry2_rr: rrEntry2,
+    entry2_rr_warning: rrEntry2 < MIN_ACCEPTABLE_RR
+      ? ('RR จริงของไม้ 2 เพียง ' + rrEntry2 + ':1 (ต่ำกว่าเกณฑ์ ' + MIN_ACCEPTABLE_RR + ') — ถ้าไม้ 1 ไม่โดน fill แล้วเข้าแต่ไม้ 2 อย่างเดียว ไม่คุ้มเสี่ยง')
+      : null,
+    sl_source: swing ? (swing.found ? 'swing_' + (short ? 'high' : 'low') + '_' + swing.barsAgo + 'd_ago' : 'range_extreme_fallback') : 'ema26_fallback',
     atr: +atr.toPrecision(4), atr_pct: +((atr / price) * 100).toFixed(2),
     direction: short ? 'SHORT' : 'LONG'
   };
@@ -248,7 +293,7 @@ module.exports = async function (req, res) {
         gold = {
           cur, cdc: c,
           weekly: weeklyTrend(goldConfirmed),
-          levels: buildLevels(cur, calcATR(closes, 14), c.ema12, c.ema26, c.status)
+          levels: buildLevels(cur, calcATR(closes, 14), c.ema12, c.ema26, c.status, closes)
         };
       }
     }
@@ -262,7 +307,7 @@ module.exports = async function (req, res) {
       const cdc = cdcStatus(closes);
       if (!cdc) return { id: c.id, noCdc: true };
       const wk = weeklyTrend(confirmed);
-      const lv = buildLevels(c.current_price, calcATR(closes, 14), cdc.ema12, cdc.ema26, cdc.status);
+      const lv = buildLevels(c.current_price, calcATR(closes, 14), cdc.ema12, cdc.ema26, cdc.status, closes);
       const trend = classifyTrend(cdc.status, wk, lv ? lv.atr_pct : null);
       let volConfirm = null;
       try {
@@ -290,7 +335,7 @@ module.exports = async function (req, res) {
     const noCdc = results.filter(r => r && r.noCdc).length;
 
     res.status(200).json({
-      ok: true, ts: Date.now(), build: 'b10-tighter-risk',
+      ok: true, ts: Date.now(), build: 'b12-swing-structure',
       universe, shortlist: candidates.length,
       fetched: candidates.length - failed, failed, noCdc,
       btc, gold, coins
