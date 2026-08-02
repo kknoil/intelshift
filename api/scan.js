@@ -99,7 +99,7 @@ function calcATR(closes, period = 14) {
   const seg = closes.slice(-(period + 1));
   let sum = 0;
   for (let i = 1; i < seg.length; i++) sum += Math.abs(seg[i] - seg[i-1]);
-  return (sum / period) * 1.4;
+  return (sum / period) * 1.15; // ลดจาก 1.4 — ของเดิมบวม SL/TP ไกลเกินจำเป็น
 }
 
 function buildLevels(price, atr, ema12, ema26, status) {
@@ -109,8 +109,8 @@ function buildLevels(price, atr, ema12, ema26, status) {
   const e1 = price - s * (0.3 * atr);
   const e2 = price + s * (0.5 * atr);
   const avg = (e1 + e2) / 2;
-  const structural = short ? Math.max(ema26, price) + 1.2 * atr : Math.min(ema26, price) - 1.2 * atr;
-  const capped = avg - s * (2.5 * atr);
+  const structural = short ? Math.max(ema26, price) + 0.7 * atr : Math.min(ema26, price) - 0.7 * atr; // ลดจาก 1.2x
+  const capped = avg - s * (2.0 * atr); // ลดจาก 2.5x
   const sl = short ? Math.min(structural, capped) : Math.max(structural, capped);
   const risk = Math.abs(avg - sl);
   return {
@@ -149,14 +149,28 @@ function weeklyTrend(pricePairs) {
   return { status, gap, barsSince };
 }
 
-function classifyTrend(dailyStatus, wk) {
+const ATR_WATCH_THRESHOLD = 3.5; // % — ATR เกินนี้ถือว่าผันผวนสูงเกินไป ให้เฝ้าดูก่อน ไม่ใช่สัญญาณเข้าเต็มรูปแบบ
+
+function classifyTrend(dailyStatus, wk, atrPct) {
   const dailyBull = dailyStatus === 'FRESH_GREEN' || dailyStatus === 'GREEN' || dailyStatus === 'NEAR_CROSS';
-  if (!wk || wk.status === 'INSUFFICIENT_DATA') return { tag: 'UNKNOWN_TREND', sizeFactor: 0.5, note: 'ข้อมูล weekly ไม่พอ (เหรียญใหม่) — ไม้ครึ่งเดียว' };
-  if (dailyBull && wk.status === 'GREEN') return { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly เขียวด้วย (ยืนมา ' + wk.barsSince + ' สัปดาห์) — เทรนด์ใหญหนุน ถือตามแผนได้' };
-  if (dailyBull && wk.status === 'RED') return { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เขียวแต่ Weekly ยังแดง (gap ' + wk.gap + '%) — แค่เด้งสวนเทรนด์ใหญ่ ไม้ครึ่งเดียว TP ใกล้ลง ออกไว' };
-  if (dailyStatus === 'FRESH_RED' && wk.status === 'RED') return { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly แดงด้วย — Short สอดคล้องเทรนด์ใหญ่' };
-  if (dailyStatus === 'FRESH_RED' && wk.status === 'GREEN') return { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เพิงตัดลงแต่ Weekly ยังเขียว — Short สวนเทรนด์ใหญ่ ไม้ครึ่งเดียว ออกไว' };
-  return { tag: 'NEUTRAL', sizeFactor: 1.0, note: '' };
+  let base;
+  if (!wk || wk.status === 'INSUFFICIENT_DATA') base = { tag: 'UNKNOWN_TREND', sizeFactor: 0.5, note: 'ข้อมูล weekly ไม่พอ (เหรียญใหม่) — ไม้ครึ่งเดียว' };
+  else if (dailyBull && wk.status === 'GREEN') base = { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly เขียวด้วย (ยืนมา ' + wk.barsSince + ' สัปดาห์) — เทรนด์ใหญหนุน ถือตามแผนได้' };
+  else if (dailyBull && wk.status === 'RED') base = { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เขียวแต่ Weekly ยังแดง (gap ' + wk.gap + '%) — แค่เด้งสวนเทรนด์ใหญ่ ไม้ครึ่งเดียว TP ใกล้ลง ออกไว' };
+  else if (dailyStatus === 'FRESH_RED' && wk.status === 'RED') base = { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly แดงด้วย — Short สอดคล้องเทรนด์ใหญ่' };
+  else if (dailyStatus === 'FRESH_RED' && wk.status === 'GREEN') base = { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เพิงตัดลงแต่ Weekly ยังเขียว — Short สวนเทรนด์ใหญ่ ไม้ครึ่งเดียว ออกไว' };
+  else base = { tag: 'NEUTRAL', sizeFactor: 1.0, note: '' };
+
+  // ATR สูงเกินไป — ลด sizeFactor ลงอีกครึ่งหนึ่ง และติดป้ายเฝ้าดู ไม่ใช่สัญญาณเข้าเต็มรูปแบบ
+  if (atrPct != null && atrPct > ATR_WATCH_THRESHOLD) {
+    return {
+      tag: 'HIGH_VOL_WATCH',
+      sizeFactor: Math.min(base.sizeFactor, 0.5) * 0.5,
+      watchOnly: true,
+      note: 'ATR ' + atrPct.toFixed(2) + '% สูงเกิน ' + ATR_WATCH_THRESHOLD + '% — ผันผวนมากเกินไป จัดเป็นเฝ้าดูเท่านั้น ไม่ใช่สัญญาณเข้าเต็มรูปแบบ รอ ATR ลดลงก่อน'
+    };
+  }
+  return base;
 }
 
 /* ---------- คัดเหรียญ (ตรรกะเดียวกับฝั่งมือถือ) ---------- */
@@ -248,8 +262,8 @@ module.exports = async function (req, res) {
       const cdc = cdcStatus(closes);
       if (!cdc) return { id: c.id, noCdc: true };
       const wk = weeklyTrend(confirmed);
-      const trend = classifyTrend(cdc.status, wk);
       const lv = buildLevels(c.current_price, calcATR(closes, 14), cdc.ema12, cdc.ema26, cdc.status);
+      const trend = classifyTrend(cdc.status, wk, lv ? lv.atr_pct : null);
       let volConfirm = null;
       try {
         const vols = (chart.total_volumes || []).map(v => v[1]);
@@ -276,7 +290,7 @@ module.exports = async function (req, res) {
     const noCdc = results.filter(r => r && r.noCdc).length;
 
     res.status(200).json({
-      ok: true, ts: Date.now(), build: 'b9-confirmed-close',
+      ok: true, ts: Date.now(), build: 'b10-tighter-risk',
       universe, shortlist: candidates.length,
       fetched: candidates.length - failed, failed, noCdc,
       btc, gold, coins
