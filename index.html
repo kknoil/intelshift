@@ -630,7 +630,7 @@ function calcATR(closes, period) {
   const seg = closes.slice(-(period + 1));
   let sum = 0;
   for (let i = 1; i < seg.length; i++) sum += Math.abs(seg[i] - seg[i-1]);
-  return (sum / period) * 1.4;
+  return (sum / period) * 1.15; // ลดจาก 1.4 — ของเดิมบวม SL/TP ไกลเกินจำเป็น
 }
 function buildLevels(price, atr, ema12, ema26, status) {
   if (!atr || !price) return null;
@@ -639,8 +639,8 @@ function buildLevels(price, atr, ema12, ema26, status) {
   const e1 = price - s * (0.3 * atr);
   const e2 = price + s * (0.5 * atr);
   const avg = (e1 + e2) / 2;
-  const structural = short ? Math.max(ema26, price) + 1.2 * atr : Math.min(ema26, price) - 1.2 * atr;
-  const capped = avg - s * (2.5 * atr);
+  const structural = short ? Math.max(ema26, price) + 0.7 * atr : Math.min(ema26, price) - 0.7 * atr; // ลดจาก 1.2x
+  const capped = avg - s * (2.0 * atr); // ลดจาก 2.5x
   const sl = short ? Math.min(structural, capped) : Math.max(structural, capped);
   const risk = Math.abs(avg - sl);
   return {
@@ -677,14 +677,26 @@ function weeklyTrend(pricePairs) {
   for (let i = n; i >= 26; i--) { if ((e12[i] > e26[i]) === (status === 'GREEN')) barsSince = n - i; else break; }
   return { status, gap, barsSince };
 }
-function classifyTrend(dailyStatus, wk) {
+const ATR_WATCH_THRESHOLD = 3.5; // % — ATR เกินนี้ถือว่าผันผวนสูงเกินไป ให้เฝ้าดูก่อน ไม่ใช่สัญญาณเข้าเต็มรูปแบบ
+function classifyTrend(dailyStatus, wk, atrPct) {
   const dailyBull = dailyStatus === 'FRESH_GREEN' || dailyStatus === 'GREEN' || dailyStatus === 'NEAR_CROSS';
-  if (!wk || wk.status === 'INSUFFICIENT_DATA') return { tag: 'UNKNOWN_TREND', sizeFactor: 0.5, note: 'ข้อมูล weekly ไม่พอ (เหรียญใหม่) — ไม้ครึ่งเดียว' };
-  if (dailyBull && wk.status === 'GREEN') return { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly เขียวด้วย (ยืนมา ' + wk.barsSince + ' สัปดาห์) — เทรนด์ใหญหนุน ถือตามแผนได้' };
-  if (dailyBull && wk.status === 'RED') return { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เขียวแต่ Weekly ยังแดง (gap ' + wk.gap + '%) — แค่เด้งสวนเทรนด์ใหญ่ ไม้ครึ่งเดียว TP ใกล้ลง ออกไว' };
-  if (dailyStatus === 'FRESH_RED' && wk.status === 'RED') return { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly แดงด้วย — Short สอดคล้องเทรนด์ใหญ่' };
-  if (dailyStatus === 'FRESH_RED' && wk.status === 'GREEN') return { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เพิงตัดลงแต่ Weekly ยังเขียว — Short สวนเทรนด์ใหญ่ ไม้ครึ่งเดียว ออกไว' };
-  return { tag: 'NEUTRAL', sizeFactor: 1.0, note: '' };
+  let base;
+  if (!wk || wk.status === 'INSUFFICIENT_DATA') base = { tag: 'UNKNOWN_TREND', sizeFactor: 0.5, note: 'ข้อมูล weekly ไม่พอ (เหรียญใหม่) — ไม้ครึ่งเดียว' };
+  else if (dailyBull && wk.status === 'GREEN') base = { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly เขียวด้วย (ยืนมา ' + wk.barsSince + ' สัปดาห์) — เทรนด์ใหญหนุน ถือตามแผนได้' };
+  else if (dailyBull && wk.status === 'RED') base = { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เขียวแต่ Weekly ยังแดง (gap ' + wk.gap + '%) — แค่เด้งสวนเทรนด์ใหญ่ ไม้ครึ่งเดียว TP ใกล้ลง ออกไว' };
+  else if (dailyStatus === 'FRESH_RED' && wk.status === 'RED') base = { tag: 'WITH_TREND', sizeFactor: 1.0, note: 'Weekly แดงด้วย — Short สอดคล้องเทรนด์ใหญ่' };
+  else if (dailyStatus === 'FRESH_RED' && wk.status === 'GREEN') base = { tag: 'COUNTER_TREND', sizeFactor: 0.5, note: 'Daily เพิงตัดลงแต่ Weekly ยังเขียว — Short สวนเทรนด์ใหญ่ ไม้ครึ่งเดียว ออกไว' };
+  else base = { tag: 'NEUTRAL', sizeFactor: 1.0, note: '' };
+
+  if (atrPct != null && atrPct > ATR_WATCH_THRESHOLD) {
+    return {
+      tag: 'HIGH_VOL_WATCH',
+      sizeFactor: Math.min(base.sizeFactor, 0.5) * 0.5,
+      watchOnly: true,
+      note: 'ATR ' + atrPct.toFixed(2) + '% สูงเกิน ' + ATR_WATCH_THRESHOLD + '% — ผันผวนมากเกินไป จัดเป็นเฝ้าดูเท่านั้น ไม่ใช่สัญญาณเข้าเต็มรูปแบบ รอ ATR ลดลงก่อน'
+    };
+  }
+  return base;
 }
 
 // สร้างประโยคอธิบายจาก "ตัวเลขจริง" ในระบบ — Rex ห้ามเขียนเอง กันมั่วทศทาง
@@ -728,7 +740,7 @@ function levelBlock(lv, isShort, fmt) {
 }
 </script>
 <script>
-const BUILD_TAG = 'b9-confirmed-close';   // เปลี่ยนทุกครั้งที่แก้ ใช้เช็คว่า deploy ขึ้นจริงไหม
+const BUILD_TAG = 'b10-tighter-risk';   // เปลี่ยนทุกครั้งที่แก้ ใช้เช็คว่า deploy ขึ้นจริงไหม
 const SCAN_COOLDOWN_MS = 60000; // กันยิง CoinGecko ถี่เกิน (ปรับได้ ถ้าเจอ error 429 บ่อยให้เพิ่มเป็น 90000)
 const SCAN_BTN_LABEL = '🔍 สแกนทอง + เหรียญวันนี้ (~0.5฿)';
 let cooldownTimer = null;
@@ -954,9 +966,9 @@ async function scanCoins() {
           const closes = hdConfirmed.map(p => p[1]); // ใช้แท่งปิดแล้วจริงเท่านั้นสำหรับคำนวณสัญญาณ
           const cdc = cdcStatus(closes);
           const wk = cdc ? weeklyTrend(hdConfirmed) : null;
-          const trend = cdc ? classifyTrend(cdc.status, wk) : null;
           const atr14 = calcATR(closes, 14);
           const lv = cdc ? buildLevels(c.current_price, atr14, cdc.ema12, cdc.ema26, cdc.status) : null;
+          const trend = cdc ? classifyTrend(cdc.status, wk, lv ? lv.atr_pct : null) : null;
           let volConfirm = null;
           try {
             const vols = (hd.total_volumes || []).map(v => v[1]);
