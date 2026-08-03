@@ -126,6 +126,77 @@ function findSwingLevel(closes, isHigh, lookback, pivotWindow) {
   return { level: isHigh ? Math.max(...seg) : Math.min(...seg), found: false, barsAgo: null };
 }
 
+// หา pivot high/low "ทั้งหมด" ในช่วงย้อนหลัง (เรียงตามเวลา) — ใช้ทำ auto-detect SMC
+function findAllSwingPivots(closes, pivotWindow, lookback) {
+  pivotWindow = pivotWindow || 2;
+  lookback = lookback || 90;
+  const n = closes.length - 1;
+  const start = Math.max(pivotWindow, n - lookback);
+  const pivots = [];
+  for (let i = start; i <= n - pivotWindow; i++) {
+    let isHigh = true, isLow = true;
+    for (let k = 1; k <= pivotWindow; k++) {
+      if (!(closes[i] > closes[i - k] && closes[i] > closes[i + k])) isHigh = false;
+      if (!(closes[i] < closes[i - k] && closes[i] < closes[i + k])) isLow = false;
+    }
+    if (isHigh) pivots.push({ index: i, price: closes[i], type: 'high' });
+    else if (isLow) pivots.push({ index: i, price: closes[i], type: 'low' });
+  }
+  return pivots;
+}
+
+// คำนวณโครงสร้าง SMC อัตโนมัติจากราคาปิดรายวัน (ประมาณการ — ไม่ใช่ wick จริงแบบ TradingView)
+// Bullish = Higher High + Higher Low ต่อเนื่อง, Bearish = Lower High + Lower Low, นอกนั้น Ranging
+function autoDetectSMC(closes, atr) {
+  const pivots = findAllSwingPivots(closes, 2, 90);
+  const highs = pivots.filter(p => p.type === 'high');
+  const lows = pivots.filter(p => p.type === 'low');
+  if (highs.length < 2 || lows.length < 2) {
+    return { structure: 'Ranging', timeframe: '1D (auto)', bos: null, choch: null, zones: [], weakHigh: null, weakLow: null, source: 'auto_insufficient_data' };
+  }
+  const lastHigh = highs[highs.length - 1], prevHigh = highs[highs.length - 2];
+  const lastLow = lows[lows.length - 1], prevLow = lows[lows.length - 2];
+
+  let structure = 'Ranging';
+  if (lastHigh.price > prevHigh.price && lastLow.price > prevLow.price) structure = 'Bullish';
+  else if (lastHigh.price < prevHigh.price && lastLow.price < prevLow.price) structure = 'Bearish';
+
+  const n = closes.length - 1;
+  const cur = closes[n];
+
+  // BOS = ราคาทะลุ pivot ล่าสุดไปทิศทางเดียวกับโครงสร้าง (ยืนยันเทรนด์เดิม)
+  // CHoCH = ราคาทะลุ pivot ล่าสุดไปทิศทางตรงข้าม (สัญญาณเปลี่ยนเทรนด์)
+  let bos = null, choch = null;
+  if (structure === 'Bullish') {
+    if (cur > lastHigh.price) bos = { price: +lastHigh.price.toFixed(6), dir: 'up', barsAgo: n - lastHigh.index, auto: true };
+    if (cur < lastLow.price) choch = { price: +lastLow.price.toFixed(6), dir: 'down', barsAgo: n - lastLow.index, auto: true };
+  } else if (structure === 'Bearish') {
+    if (cur < lastLow.price) bos = { price: +lastLow.price.toFixed(6), dir: 'down', barsAgo: n - lastLow.index, auto: true };
+    if (cur > lastHigh.price) choch = { price: +lastHigh.price.toFixed(6), dir: 'up', barsAgo: n - lastHigh.index, auto: true };
+  }
+
+  // Zones: ใช้ pivot สูง/ต่ำล่าสุด 2 ตัวหลัง เป็นโซน supply/demand คร่าวๆ (buffer ±0.3 ATR กันราคาปิดคลาดจาก wick จริง)
+  const buf = (atr || cur * 0.01) * 0.3;
+  const zones = [];
+  highs.slice(-2).forEach(h => {
+    const distPct = Math.abs(cur - h.price) / cur * 100;
+    const status = cur > h.price + buf ? 'broken' : (distPct <= 2 ? 'tested' : 'untested');
+    zones.push({ type: 'supply', high: +(h.price + buf).toPrecision(6), low: +(h.price - buf).toPrecision(6), status, auto: true, barsAgo: n - h.index });
+  });
+  lows.slice(-2).forEach(l => {
+    const distPct = Math.abs(cur - l.price) / cur * 100;
+    const status = cur < l.price - buf ? 'broken' : (distPct <= 2 ? 'tested' : 'untested');
+    zones.push({ type: 'demand', high: +(l.price + buf).toPrecision(6), low: +(l.price - buf).toPrecision(6), status, auto: true, barsAgo: n - l.index });
+  });
+
+  // Weak High/Low: pivot ล่าสุดที่ "อ่อนกว่า" pivot ก่อนหน้า = สัญญาณ liquidity สะสมรอถูก sweep
+  let weakHigh = null, weakLow = null;
+  if (lastHigh.price < prevHigh.price) weakHigh = { price: +lastHigh.price.toFixed(6), note: 'ต่ำกว่า pivot ก่อนหน้า ($' + prevHigh.price.toFixed(6) + ') — เสี่ยงถูก sweep ก่อนกลับตัว', auto: true };
+  if (lastLow.price > prevLow.price) weakLow = { price: +lastLow.price.toFixed(6), note: 'สูงกว่า pivot ก่อนหน้า ($' + prevLow.price.toFixed(6) + ') — เสี่ยงถูก sweep ก่อนกลับตัว', auto: true };
+
+  return { structure, timeframe: '1D (auto)', bos, choch, zones, weakHigh, weakLow, source: 'auto_daily_close_approx' };
+}
+
 function buildLevels(price, atr, ema12, ema26, status, closes) {
   if (!atr || !price) return null;
   const short = (status === 'FRESH_RED' || status === 'RED');
@@ -309,6 +380,7 @@ module.exports = async function (req, res) {
       const wk = weeklyTrend(confirmed);
       const lv = buildLevels(c.current_price, calcATR(closes, 14), cdc.ema12, cdc.ema26, cdc.status, closes);
       const trend = classifyTrend(cdc.status, wk, lv ? lv.atr_pct : null);
+      const smcAuto = autoDetectSMC(closes, lv ? lv.atr : calcATR(closes, 14));
       let volConfirm = null;
       try {
         const vols = (chart.total_volumes || []).map(v => v[1]);
@@ -325,7 +397,7 @@ module.exports = async function (req, res) {
         chg24h: +(c.price_change_percentage_24h_in_currency || 0).toFixed(2),
         chg7d: +(c.price_change_percentage_7d_in_currency || 0).toFixed(2),
         vol_mcap: +((c.total_volume / c.market_cap) * 100).toFixed(1),
-        cdc, trend, plan: lv, vol_confirm: volConfirm,
+        cdc, trend, plan: lv, vol_confirm: volConfirm, smc_auto: smcAuto,
         atr_pct: lv ? lv.atr_pct : null
       };
     });
@@ -335,7 +407,7 @@ module.exports = async function (req, res) {
     const noCdc = results.filter(r => r && r.noCdc).length;
 
     res.status(200).json({
-      ok: true, ts: Date.now(), build: 'b12-swing-structure',
+      ok: true, ts: Date.now(), build: 'b14-smc-auto',
       universe, shortlist: candidates.length,
       fetched: candidates.length - failed, failed, noCdc,
       btc, gold, coins
