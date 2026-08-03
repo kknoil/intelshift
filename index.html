@@ -695,6 +695,72 @@ function findSwingLevel(closes, isHigh, lookback, pivotWindow) {
   return { level: isHigh ? Math.max(...seg) : Math.min(...seg), found: false, barsAgo: null };
 }
 
+// หา pivot high/low "ทั้งหมด" ในช่วงย้อนหลัง (เรียงตามเวลา) — ใช้ทำ auto-detect SMC
+function findAllSwingPivots(closes, pivotWindow, lookback) {
+  pivotWindow = pivotWindow || 2;
+  lookback = lookback || 90;
+  const n = closes.length - 1;
+  const start = Math.max(pivotWindow, n - lookback);
+  const pivots = [];
+  for (let i = start; i <= n - pivotWindow; i++) {
+    let isHigh = true, isLow = true;
+    for (let k = 1; k <= pivotWindow; k++) {
+      if (!(closes[i] > closes[i - k] && closes[i] > closes[i + k])) isHigh = false;
+      if (!(closes[i] < closes[i - k] && closes[i] < closes[i + k])) isLow = false;
+    }
+    if (isHigh) pivots.push({ index: i, price: closes[i], type: 'high' });
+    else if (isLow) pivots.push({ index: i, price: closes[i], type: 'low' });
+  }
+  return pivots;
+}
+
+// คำนวณโครงสร้าง SMC อัตโนมัติจากราคาปิดรายวัน (ประมาณการ — ไม่ใช่ wick จริงแบบ TradingView)
+function autoDetectSMC(closes, atr) {
+  const pivots = findAllSwingPivots(closes, 2, 90);
+  const highs = pivots.filter(p => p.type === 'high');
+  const lows = pivots.filter(p => p.type === 'low');
+  if (highs.length < 2 || lows.length < 2) {
+    return { structure: 'Ranging', timeframe: '1D (auto)', bos: null, choch: null, zones: [], weakHigh: null, weakLow: null, source: 'auto_insufficient_data' };
+  }
+  const lastHigh = highs[highs.length - 1], prevHigh = highs[highs.length - 2];
+  const lastLow = lows[lows.length - 1], prevLow = lows[lows.length - 2];
+
+  let structure = 'Ranging';
+  if (lastHigh.price > prevHigh.price && lastLow.price > prevLow.price) structure = 'Bullish';
+  else if (lastHigh.price < prevHigh.price && lastLow.price < prevLow.price) structure = 'Bearish';
+
+  const n = closes.length - 1;
+  const cur = closes[n];
+
+  let bos = null, choch = null;
+  if (structure === 'Bullish') {
+    if (cur > lastHigh.price) bos = { price: +lastHigh.price.toFixed(6), dir: 'up', barsAgo: n - lastHigh.index, auto: true };
+    if (cur < lastLow.price) choch = { price: +lastLow.price.toFixed(6), dir: 'down', barsAgo: n - lastLow.index, auto: true };
+  } else if (structure === 'Bearish') {
+    if (cur < lastLow.price) bos = { price: +lastLow.price.toFixed(6), dir: 'down', barsAgo: n - lastLow.index, auto: true };
+    if (cur > lastHigh.price) choch = { price: +lastHigh.price.toFixed(6), dir: 'up', barsAgo: n - lastHigh.index, auto: true };
+  }
+
+  const buf = (atr || cur * 0.01) * 0.3;
+  const zones = [];
+  highs.slice(-2).forEach(h => {
+    const distPct = Math.abs(cur - h.price) / cur * 100;
+    const status = cur > h.price + buf ? 'broken' : (distPct <= 2 ? 'tested' : 'untested');
+    zones.push({ type: 'supply', high: +(h.price + buf).toPrecision(6), low: +(h.price - buf).toPrecision(6), status, auto: true, barsAgo: n - h.index });
+  });
+  lows.slice(-2).forEach(l => {
+    const distPct = Math.abs(cur - l.price) / cur * 100;
+    const status = cur < l.price - buf ? 'broken' : (distPct <= 2 ? 'tested' : 'untested');
+    zones.push({ type: 'demand', high: +(l.price + buf).toPrecision(6), low: +(l.price - buf).toPrecision(6), status, auto: true, barsAgo: n - l.index });
+  });
+
+  let weakHigh = null, weakLow = null;
+  if (lastHigh.price < prevHigh.price) weakHigh = { price: +lastHigh.price.toFixed(6), note: 'ต่ำกว่า pivot ก่อนหน้า ($' + prevHigh.price.toFixed(6) + ') — เสี่ยงถูก sweep ก่อนกลับตัว', auto: true };
+  if (lastLow.price > prevLow.price) weakLow = { price: +lastLow.price.toFixed(6), note: 'สูงกว่า pivot ก่อนหน้า ($' + prevLow.price.toFixed(6) + ') — เสี่ยงถูก sweep ก่อนกลับตัว', auto: true };
+
+  return { structure, timeframe: '1D (auto)', bos, choch, zones, weakHigh, weakLow, source: 'auto_daily_close_approx' };
+}
+
 function buildLevels(price, atr, ema12, ema26, status, closes) {
   if (!atr || !price) return null;
   const short = (status === 'FRESH_RED' || status === 'RED');
@@ -823,7 +889,7 @@ function levelBlock(lv, isShort, fmt) {
 }
 </script>
 <script>
-const BUILD_TAG = 'b13-smc-tracker';   // เปลี่ยนทุกครั้งที่แก้ ใช้เช็คว่า deploy ขึ้นจริงไหม
+const BUILD_TAG = 'b14-smc-auto';   // เปลี่ยนทุกครั้งที่แก้ ใช้เช็คว่า deploy ขึ้นจริงไหม
 const SCAN_COOLDOWN_MS = 60000; // กันยิง CoinGecko ถี่เกิน (ปรับได้ ถ้าเจอ error 429 บ่อยให้เพิ่มเป็น 90000)
 const SCAN_BTN_LABEL = '🔍 สแกนทอง + เหรียญวันนี้ (~0.5฿)';
 let cooldownTimer = null;
@@ -945,12 +1011,13 @@ async function scanCoins() {
         goldWeekly = srv.gold.weekly; goldLevels = srv.gold.levels;
         scanStats.gold = true;
       }
-      window._cgMap = {}; window._trendMap = {}; window._lvMap = {};
+      window._cgMap = {}; window._trendMap = {}; window._lvMap = {}; window._smcAutoMap = {};
       analyzed = srv.coins.map(function(c) {
         const isShort = c.cdc.status === 'FRESH_RED' || c.cdc.status === 'RED';
         window._cgMap[c.symbol] = { id: c.id, price: c.lastClose };
         window._trendMap[c.symbol] = c.trend;
         if (c.plan) window._lvMap[c.symbol] = c.plan;
+        if (c.smc_auto) window._smcAutoMap[c.symbol] = c.smc_auto;
         return {
           symbol: c.symbol, name: c.name, rank: c.rank, price: c.price,
           chg24h: c.chg24h, chg7d: c.chg7d, vol_mcap: c.vol_mcap,
@@ -1074,6 +1141,8 @@ async function scanCoins() {
             window._trendMap[(c.symbol||'').toUpperCase()] = trend;
             window._lvMap = window._lvMap || {};
             if (lv) window._lvMap[(c.symbol||'').toUpperCase()] = lv;
+            window._smcAutoMap = window._smcAutoMap || {};
+            window._smcAutoMap[(c.symbol||'').toUpperCase()] = autoDetectSMC(closes, lv ? lv.atr : atr14);
           } else {
             scanStats.noCdc++;
           }
@@ -1180,6 +1249,7 @@ async function scanCoins() {
     parsed.btc = btcCdc || null;
     parsed._trend = window._trendMap || {};
     parsed._lv = window._lvMap || {};
+    parsed._smcAuto = window._smcAutoMap || {};
     if (goldLevels) parsed._goldLv = goldLevels;
     parsed._stats = scanStats;
     const scanData = {result: parsed, time: new Date().toISOString()};
@@ -1232,16 +1302,19 @@ window._smcEditingSym = null;
 
 function smcOpenEditor(sym) {
   window._smcEditingSym = sym;
-  const data = smcLoad(sym) || {};
-  document.getElementById('smc-modal-sym').textContent = sym;
+  const manual = smcLoad(sym);
+  const autoData = (window._smcAutoMap || {})[sym];
+  const data = manual || autoData || {};
+  const tf = (data.timeframe || '1H').replace(' (auto)', ''); // '1D (auto)' ไม่ใช่ตัวเลือกใน select ต้องตัดออก
+  document.getElementById('smc-modal-sym').textContent = sym + (!manual && autoData ? ' (เติมค่าจากระบบอัตโนมัติ — แก้ไข/ยืนยันได้)' : '');
   document.getElementById('smc-structure').value = data.structure || 'Ranging';
-  document.getElementById('smc-timeframe').value = data.timeframe || '1H';
+  document.getElementById('smc-timeframe').value = tf;
   document.getElementById('smc-bos-price').value = data.bos ? data.bos.price : '';
   document.getElementById('smc-bos-dir').value = data.bos ? data.bos.dir : '';
-  document.getElementById('smc-bos-date').value = data.bos ? data.bos.date : '';
+  document.getElementById('smc-bos-date').value = data.bos ? (data.bos.date || '') : '';
   document.getElementById('smc-choch-price').value = data.choch ? data.choch.price : '';
   document.getElementById('smc-choch-dir').value = data.choch ? data.choch.dir : '';
-  document.getElementById('smc-choch-date').value = data.choch ? data.choch.date : '';
+  document.getElementById('smc-choch-date').value = data.choch ? (data.choch.date || '') : '';
   document.getElementById('smc-weakhigh-price').value = data.weakHigh ? data.weakHigh.price : '';
   document.getElementById('smc-weakhigh-note').value = data.weakHigh ? (data.weakHigh.note || '') : '';
   document.getElementById('smc-weaklow-price').value = data.weakLow ? data.weakLow.price : '';
@@ -1324,7 +1397,7 @@ function smcRefreshCardsFor(sym) {
   document.querySelectorAll('[data-smc-sym="' + sym + '"]').forEach(el => {
     const price = parseFloat(el.getAttribute('data-smc-price')) || null;
     const dir = el.getAttribute('data-smc-dir') || 'long';
-    el.innerHTML = smcBlockHtml(sym, price, dir);
+    el.innerHTML = smcBlockHtml(sym, price, dir, (window._smcAutoMap || {})[sym]);
   });
 }
 
@@ -1370,17 +1443,21 @@ function smcStructBadge(structure) {
 }
 
 // สร้าง HTML ของ SMC block ในการ์ด (เรียกทั้งตอน render ครั้งแรก และตอน refresh หลังบันทึก)
-function smcBlockHtml(sym, price, direction) {
-  const data = smcLoad(sym);
+function smcBlockHtml(sym, price, direction, autoData) {
+  const manual = smcLoad(sym);
+  const data = manual || autoData;
   if (!data) {
     return '<div class="smc-block"><div class="smc-head"><span class="smc-title">📐 SMC Structure</span><button class="smc-edit-btn" onclick="smcOpenEditor(\'' + sym + '\')">+ เพิ่มข้อมูล</button></div><div class="smc-empty">ยังไม่มีข้อมูล — กรอกโครงสร้าง SMC เพื่อใช้กรองสัญญาณเสริม</div></div>';
   }
+  const isAuto = !manual; // ไม่มี manual = ใช้ค่าที่คำนวณอัตโนมัติอยู่
   let html = '<div class="smc-block"><div class="smc-head">';
   html += '<span>' + smcStructBadge(data.structure) + '<span class="smc-tf">' + (data.timeframe || '') + '</span></span>';
   html += '<button class="smc-edit-btn" onclick="smcOpenEditor(\'' + sym + '\')">✏️ แก้ไข</button></div>';
 
-  if (data.choch) html += '<div class="smc-line">🔀 CHoCH: $' + data.choch.price + (data.choch.date ? ' (' + data.choch.date + ')' : '') + ' ' + (data.choch.dir === 'up' ? '↑ เปลี่ยนเป็นขาขึ้น' : data.choch.dir === 'down' ? '↓ เปลี่ยนเป็นขาลง' : '') + '</div>';
-  if (data.bos) html += '<div class="smc-line">✅ BOS: $' + data.bos.price + (data.bos.date ? ' (' + data.bos.date + ')' : '') + ' ' + (data.bos.dir === 'up' ? '↑ ยืนยันขาขึ้น' : data.bos.dir === 'down' ? '↓ ยืนยันขาลง' : '') + '</div>';
+  if (isAuto) html += '<div class="smc-line" style="color:var(--pu);">🤖 คำนวณอัตโนมัติจากราคาปิดรายวัน (ประมาณการ) — แนะนำเช็คกับ TradingView แล้วกด "แก้ไข" เพื่อยืนยัน</div>';
+
+  if (data.choch) html += '<div class="smc-line">🔀 CHoCH: $' + data.choch.price + (data.choch.date ? ' (' + data.choch.date + ')' : (data.choch.barsAgo != null ? ' (' + data.choch.barsAgo + 'd ago)' : '')) + ' ' + (data.choch.dir === 'up' ? '↑ เปลี่ยนเป็นขาขึ้น' : data.choch.dir === 'down' ? '↓ เปลี่ยนเป็นขาลง' : '') + '</div>';
+  if (data.bos) html += '<div class="smc-line">✅ BOS: $' + data.bos.price + (data.bos.date ? ' (' + data.bos.date + ')' : (data.bos.barsAgo != null ? ' (' + data.bos.barsAgo + 'd ago)' : '')) + ' ' + (data.bos.dir === 'up' ? '↑ ยืนยันขาขึ้น' : data.bos.dir === 'down' ? '↓ ยืนยันขาลง' : '') + '</div>';
 
   (data.zones || []).forEach(z => {
     const statusTh = z.status === 'untested' ? 'ยังไม่ถูกทดสอบ' : z.status === 'tested' ? 'ทดสอบแล้ว' : 'ถูกทะลุแล้ว';
@@ -1400,6 +1477,7 @@ function smcBlockHtml(sym, price, direction) {
 function renderScan(parsed, dt) {
   document.getElementById('scan-loading').style.display = 'none';
   window._lvMap = parsed._lv || window._lvMap || {};
+  window._smcAutoMap = parsed._smcAuto || window._smcAutoMap || {};
   const oldB = document.getElementById('btc-banner'); if (oldB) oldB.remove();
   if (parsed.btc) {
     const s = parsed.btc.status;
@@ -1441,7 +1519,7 @@ function renderScan(parsed, dt) {
       ${levelBlock(lvOf(c.symbol), false)}
       <div class="coin-sec"><span class="coin-label">เหตุผล + CDC</span>${c.reason||'—'}</div>
       <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
-      <div data-smc-sym="${(c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase()}" data-smc-price="${parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||''}" data-smc-dir="long">${smcBlockHtml((c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase(), parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||null, 'long')}</div>
+      <div data-smc-sym="${(c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase()}" data-smc-price="${parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||''}" data-smc-dir="long">${smcBlockHtml((c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase(), parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||null, 'long', (window._smcAutoMap||{})[(c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase()])}</div>
     </div>`).join('');
   const shortCoins = parsed.coins_short || [];
   const shortWrap = document.getElementById('short-section');
@@ -1460,7 +1538,7 @@ function renderScan(parsed, dt) {
         ${levelBlock(lvOf(c.symbol), true)}
         <div class="coin-sec"><span class="coin-label">เหตุผล + CDC</span>${c.reason||'—'}</div>
         <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
-        <div data-smc-sym="${(c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase()}" data-smc-price="${parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||''}" data-smc-dir="short">${smcBlockHtml((c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase(), parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||null, 'short')}</div>
+        <div data-smc-sym="${(c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase()}" data-smc-price="${parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||''}" data-smc-dir="short">${smcBlockHtml((c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase(), parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||null, 'short', (window._smcAutoMap||{})[(c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase()])}</div>
       </div>`).join('');
   } else { shortWrap.style.display = 'none'; }
   document.getElementById('scan-time').textContent = (dt||new Date()).toLocaleDateString('th-TH') + ' ' + (dt||new Date()).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
@@ -1497,7 +1575,7 @@ async function fetchLivePrices(coins, pricePrefix, verdictPrefix, direction) {
     el.innerHTML = '<span style="color:var(--tx);font-weight:700;font-size:15px;">' + fmtP + '</span>' + (chg != null ? ' <span style="color:' + (chg >= 0 ? 'var(--gd)' : 'var(--red)') + ';">' + (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%</span>' : '');
     // อัปเดต SMC block ด้วยราคาสดจริง (แม่นกว่าราคาตอนสแกน) เพื่อเช็ค proximity ให้ถูกต้อง
     const smcEl = el.closest('.coin-card') ? el.closest('.coin-card').querySelector('[data-smc-sym="' + ticker + '"]') : null;
-    if (smcEl) { smcEl.setAttribute('data-smc-price', price); smcEl.innerHTML = smcBlockHtml(ticker, price, direction); }
+    if (smcEl) { smcEl.setAttribute('data-smc-price', price); smcEl.innerHTML = smcBlockHtml(ticker, price, direction, (window._smcAutoMap||{})[ticker]); }
     const lv = (window._lvMap || {})[ticker];
     const eLow = lv ? Math.min(lv.entry1, lv.entry2) : Number(coins[i].entry_low);
     const eHigh = lv ? Math.max(lv.entry1, lv.entry2) : Number(coins[i].entry_high);
