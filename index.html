@@ -11,6 +11,7 @@
   --g:#1D9E75;--gl:rgba(29,158,117,.12);--gm:rgba(29,158,117,.35);--gd:#25c28f;
   --red:#E24B4A;--rl:rgba(226,75,74,.1);--amb:#EF9F27;--abg:rgba(239,159,39,.12);
   --pu:#7F77DD;--pubg:rgba(127,119,221,.12);
+  --bl:#4A90E2;--bll:rgba(74,144,226,.12);--blm:rgba(74,144,226,.35);
   --bg:#0f1117;--bg2:#161b27;--bg3:#1e2535;--bg4:#252d3d;
   --br:#2a3348;--br2:#3a4a6a;
   --tx:#e8ecf4;--tx2:#93a0b4;--tx3:#566179;
@@ -80,6 +81,47 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);fo
 .coin-label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--tx3);display:block;margin-bottom:2px;}
 .coin-levels{font-size:12px;color:#AFA9EC;margin-bottom:8px;}
 .coin-risk{font-size:12px;color:var(--red);background:var(--rl);border:1px solid rgba(226,75,74,.2);border-radius:var(--rs);padding:8px 10px;line-height:1.5;}
+
+/* SMC Structure Tracker */
+.smc-block{margin-bottom:8px;border-top:1px dashed var(--br);padding-top:8px;}
+.smc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.smc-title{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--tx3);}
+.smc-edit-btn{font-size:11px;color:var(--pu);background:none;border:none;cursor:pointer;font-family:inherit;padding:2px 6px;}
+.smc-struct{display:inline-block;font-size:11px;font-weight:700;border-radius:5px;padding:2px 8px;margin-right:6px;}
+.smc-struct.bull{background:var(--gl);color:var(--gd);border:1px solid var(--gm);}
+.smc-struct.bear{background:var(--rl);color:var(--red);border:1px solid rgba(226,75,74,.35);}
+.smc-struct.range{background:var(--abg);color:var(--amb);border:1px solid rgba(239,159,39,.35);}
+.smc-tf{display:inline-block;font-size:10px;color:var(--tx3);background:var(--bg4);border-radius:5px;padding:2px 7px;}
+.smc-line{font-size:11px;color:var(--tx2);margin:4px 0;line-height:1.5;}
+.smc-zone{display:flex;align-items:center;justify-content:space-between;font-size:11px;border-radius:6px;padding:5px 8px;margin:4px 0;}
+.smc-zone.supply{background:var(--rl);border:1px solid rgba(226,75,74,.3);color:var(--red);}
+.smc-zone.demand{background:var(--bll);border:1px solid var(--blm);color:var(--bl);}
+.smc-zone-status{font-size:9px;opacity:.75;}
+.smc-warn{font-size:11px;font-weight:700;color:var(--amb);background:var(--abg);border:1px solid rgba(239,159,39,.35);border-radius:6px;padding:6px 8px;margin:4px 0;}
+.smc-confidence{font-size:11px;font-weight:600;border-radius:6px;padding:6px 8px;margin:4px 0;}
+.smc-confidence.high{background:var(--gl);color:var(--gd);border:1px solid var(--gm);}
+.smc-confidence.conflict{background:var(--rl);color:var(--red);border:1px solid rgba(226,75,74,.3);}
+.smc-confidence.caution{background:var(--abg);color:var(--amb);border:1px solid rgba(239,159,39,.35);}
+.smc-empty{font-size:11px;color:var(--tx3);}
+
+.smc-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end;justify-content:center;}
+.smc-modal-overlay.open{display:flex;}
+.smc-modal{background:var(--bg2);border-radius:16px 16px 0 0;width:100%;max-width:640px;max-height:88vh;overflow-y:auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom));}
+.smc-modal-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.smc-modal-close{background:none;border:none;color:var(--tx3);font-size:20px;cursor:pointer;}
+.smc-field{margin-bottom:12px;}
+.smc-field label{display:block;font-size:11px;color:var(--tx3);margin-bottom:4px;font-weight:600;}
+.smc-field select,.smc-field input{width:100%;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:10px 12px;font-size:14px;color:var(--tx);font-family:inherit;outline:none;}
+.smc-field select:focus,.smc-field input:focus{border-color:var(--pu);}
+.smc-row2{display:flex;gap:8px;}
+.smc-row2>div{flex:1;}
+.smc-zone-row{background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:10px;margin-bottom:8px;}
+.smc-zone-row-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.smc-zone-del{background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;font-family:inherit;}
+.smc-add-zone{width:100%;background:var(--bg3);border:1px dashed var(--br2);border-radius:var(--rs);padding:10px;color:var(--tx2);font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:12px;}
+.smc-modal-actions{display:flex;gap:8px;margin-top:8px;}
+.smc-modal-actions .btn{flex:1;}
+.smc-modal-actions .btn-ghost{background:var(--bg3);color:var(--tx2);}
 .scan-note{font-size:11px;color:var(--tx3);line-height:1.6;padding-top:10px;border-top:1px solid var(--br);}
 .key-hint{display:none;font-size:13px;color:var(--amb);background:var(--abg);border:1px solid rgba(239,159,39,.3);border-radius:var(--rs);padding:12px;}
 .tp-body{width:100%;min-height:180px;background:var(--bg3);border:1px solid var(--br);border-radius:var(--rs);padding:14px;font-size:14px;line-height:1.9;color:var(--tx);font-family:'JetBrains Mono',monospace;resize:vertical;outline:none;white-space:pre-wrap;}
@@ -781,7 +823,7 @@ function levelBlock(lv, isShort, fmt) {
 }
 </script>
 <script>
-const BUILD_TAG = 'b12-swing-structure';   // เปลี่ยนทุกครั้งที่แก้ ใช้เช็คว่า deploy ขึ้นจริงไหม
+const BUILD_TAG = 'b13-smc-tracker';   // เปลี่ยนทุกครั้งที่แก้ ใช้เช็คว่า deploy ขึ้นจริงไหม
 const SCAN_COOLDOWN_MS = 60000; // กันยิง CoinGecko ถี่เกิน (ปรับได้ ถ้าเจอ error 429 บ่อยให้เพิ่มเป็น 90000)
 const SCAN_BTN_LABEL = '🔍 สแกนทอง + เหรียญวันนี้ (~0.5฿)';
 let cooldownTimer = null;
@@ -1160,6 +1202,201 @@ async function scanCoins() {
   }
 }
 
+/* ================= SMC Structure Tracker ================= */
+// เก็บด้วย localStorage (window.storage ใช้ไม่ได้บนเว็บที่ deploy จริง — ใช้ได้แค่ใน Claude Artifact เท่านั้น)
+const SMC_PROXIMITY_PCT = 1.0; // % — ราคาห่างจากขอบโซนไม่เกินนี้ถือว่า "ใกล้โซน"
+
+function smcKey(sym) { return 'smc:' + (sym || '').toUpperCase(); }
+
+function smcLoad(sym) {
+  try {
+    const raw = localStorage.getItem(smcKey(sym));
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+function smcSaveData(sym, data) {
+  try {
+    data.updatedAt = new Date().toISOString();
+    localStorage.setItem(smcKey(sym), JSON.stringify(data));
+    return true;
+  } catch (e) { return false; }
+}
+
+function smcDeleteData(sym) {
+  try { localStorage.removeItem(smcKey(sym)); return true; } catch (e) { return false; }
+}
+
+// ---- Modal ----
+window._smcEditingSym = null;
+
+function smcOpenEditor(sym) {
+  window._smcEditingSym = sym;
+  const data = smcLoad(sym) || {};
+  document.getElementById('smc-modal-sym').textContent = sym;
+  document.getElementById('smc-structure').value = data.structure || 'Ranging';
+  document.getElementById('smc-timeframe').value = data.timeframe || '1H';
+  document.getElementById('smc-bos-price').value = data.bos ? data.bos.price : '';
+  document.getElementById('smc-bos-dir').value = data.bos ? data.bos.dir : '';
+  document.getElementById('smc-bos-date').value = data.bos ? data.bos.date : '';
+  document.getElementById('smc-choch-price').value = data.choch ? data.choch.price : '';
+  document.getElementById('smc-choch-dir').value = data.choch ? data.choch.dir : '';
+  document.getElementById('smc-choch-date').value = data.choch ? data.choch.date : '';
+  document.getElementById('smc-weakhigh-price').value = data.weakHigh ? data.weakHigh.price : '';
+  document.getElementById('smc-weakhigh-note').value = data.weakHigh ? (data.weakHigh.note || '') : '';
+  document.getElementById('smc-weaklow-price').value = data.weakLow ? data.weakLow.price : '';
+  document.getElementById('smc-weaklow-note').value = data.weakLow ? (data.weakLow.note || '') : '';
+  document.getElementById('smc-zones-list').innerHTML = '';
+  (data.zones || []).forEach(z => smcAddZoneRow(z));
+  document.getElementById('smc-overlay').classList.add('open');
+}
+
+function smcCloseEditor() {
+  document.getElementById('smc-overlay').classList.remove('open');
+  window._smcEditingSym = null;
+}
+
+function smcAddZoneRow(zone) {
+  zone = zone || { type: 'supply', high: '', low: '', status: 'untested' };
+  const wrap = document.getElementById('smc-zones-list');
+  const row = document.createElement('div');
+  row.className = 'smc-zone-row';
+  row.innerHTML = `
+    <div class="smc-zone-row-head">
+      <select class="smc-z-type" style="width:auto;flex:1;margin-right:6px;">
+        <option value="supply" ${zone.type==='supply'?'selected':''}>🔴 Supply (ต้าน)</option>
+        <option value="demand" ${zone.type==='demand'?'selected':''}>🔵 Demand (รับ)</option>
+      </select>
+      <button type="button" class="smc-zone-del" onclick="this.closest('.smc-zone-row').remove()">ลบ ✕</button>
+    </div>
+    <div class="smc-row2" style="margin-bottom:6px;">
+      <div><input type="number" step="any" class="smc-z-high" placeholder="High" value="${zone.high!=null?zone.high:''}"></div>
+      <div><input type="number" step="any" class="smc-z-low" placeholder="Low" value="${zone.low!=null?zone.low:''}"></div>
+    </div>
+    <select class="smc-z-status">
+      <option value="untested" ${zone.status==='untested'?'selected':''}>ยังไม่ถูกทดสอบ</option>
+      <option value="tested" ${zone.status==='tested'?'selected':''}>ทดสอบแล้ว</option>
+      <option value="broken" ${zone.status==='broken'?'selected':''}>ถูกทะลุแล้ว</option>
+    </select>`;
+  wrap.appendChild(row);
+}
+
+function smcSaveFromModal() {
+  const sym = window._smcEditingSym;
+  if (!sym) return;
+  const zones = Array.from(document.querySelectorAll('#smc-zones-list .smc-zone-row')).map(row => ({
+    type: row.querySelector('.smc-z-type').value,
+    high: parseFloat(row.querySelector('.smc-z-high').value) || null,
+    low: parseFloat(row.querySelector('.smc-z-low').value) || null,
+    status: row.querySelector('.smc-z-status').value
+  })).filter(z => z.high != null && z.low != null);
+
+  const bosPrice = parseFloat(document.getElementById('smc-bos-price').value);
+  const chochPrice = parseFloat(document.getElementById('smc-choch-price').value);
+  const whPrice = parseFloat(document.getElementById('smc-weakhigh-price').value);
+  const wlPrice = parseFloat(document.getElementById('smc-weaklow-price').value);
+
+  const data = {
+    structure: document.getElementById('smc-structure').value,
+    timeframe: document.getElementById('smc-timeframe').value,
+    bos: !isNaN(bosPrice) ? { price: bosPrice, dir: document.getElementById('smc-bos-dir').value, date: document.getElementById('smc-bos-date').value } : null,
+    choch: !isNaN(chochPrice) ? { price: chochPrice, dir: document.getElementById('smc-choch-dir').value, date: document.getElementById('smc-choch-date').value } : null,
+    zones,
+    weakHigh: !isNaN(whPrice) ? { price: whPrice, note: document.getElementById('smc-weakhigh-note').value } : null,
+    weakLow: !isNaN(wlPrice) ? { price: wlPrice, note: document.getElementById('smc-weaklow-note').value } : null
+  };
+  smcSaveData(sym, data);
+  smcCloseEditor();
+  smcRefreshCardsFor(sym);
+}
+
+function smcDeleteFromModal() {
+  const sym = window._smcEditingSym;
+  if (!sym) return;
+  if (!confirm('ลบข้อมูล SMC ของ ' + sym + ' ทั้งหมด?')) return;
+  smcDeleteData(sym);
+  smcCloseEditor();
+  smcRefreshCardsFor(sym);
+}
+
+// รีเฟรชการ์ดทุกใบที่ตรงกับ symbol นี้ (ทั้งฝั่ง long และ short list ถ้ามี)
+function smcRefreshCardsFor(sym) {
+  document.querySelectorAll('[data-smc-sym="' + sym + '"]').forEach(el => {
+    const price = parseFloat(el.getAttribute('data-smc-price')) || null;
+    const dir = el.getAttribute('data-smc-dir') || 'long';
+    el.innerHTML = smcBlockHtml(sym, price, dir);
+  });
+}
+
+// เช็คว่าราคาปัจจุบันใกล้โซนไหนไหม (ภายใน SMC_PROXIMITY_PCT %)
+function smcNearestZoneWarning(price, zones) {
+  if (!price || !zones || !zones.length) return null;
+  let nearest = null;
+  zones.forEach(z => {
+    if (z.status === 'broken') return; // โซนที่ทะลุแล้วไม่ต้องเตือน
+    const inside = price <= z.high && price >= z.low;
+    const dist = inside ? 0 : Math.min(Math.abs(price - z.high), Math.abs(price - z.low));
+    const pct = (dist / price) * 100;
+    if (pct <= SMC_PROXIMITY_PCT && (!nearest || pct < nearest.pct)) nearest = { zone: z, pct, inside };
+  });
+  return nearest;
+}
+
+// ผสาน CDC direction เข้ากับโครงสร้าง SMC เพื่อบอก confidence
+function smcConfidenceBadge(direction, data, price) {
+  if (!data || !data.structure) return '';
+  const isLong = direction === 'long';
+  const structConflict = (isLong && data.structure === 'Bearish') || (!isLong && data.structure === 'Bullish');
+  const nearest = smcNearestZoneWarning(price, data.zones);
+  const nearOpposingZone = nearest && ((isLong && nearest.zone.type === 'supply') || (!isLong && nearest.zone.type === 'demand'));
+
+  if (structConflict) {
+    return '<div class="smc-confidence conflict">⚠️ โครงสร้าง SMC เป็น ' + data.structure + ' สวนทางสัญญาณ ' + (isLong?'Long':'Short') + ' จาก CDC — ระวัง อาจเป็นแค่การเด้งสวนเทรนด์ใหญ่</div>';
+  }
+  if (nearOpposingZone) {
+    const z = nearest.zone;
+    return '<div class="smc-confidence caution">⏳ ราคา' + (nearest.inside?'อยู่ใน':'ใกล้') + 'โซน ' + (z.type==='supply'?'Supply (ต้าน)':'Demand (รับ)') + ' $' + z.low + '–$' + z.high + ' (ห่าง ' + nearest.pct.toFixed(2) + '%) — พิจารณารอ หรือลดขนาดไม้</div>';
+  }
+  if (data.structure === (isLong ? 'Bullish' : 'Bearish')) {
+    return '<div class="smc-confidence high">✅ โครงสร้าง SMC (' + data.timeframe + ') หนุนทิศทาง ' + (isLong?'Long':'Short') + ' — ไม่ติดโซนต้าน/รับใกล้ๆ — confidence สูง</div>';
+  }
+  return '';
+}
+
+function smcStructBadge(structure) {
+  if (structure === 'Bullish') return '<span class="smc-struct bull">📈 Bullish</span>';
+  if (structure === 'Bearish') return '<span class="smc-struct bear">📉 Bearish</span>';
+  return '<span class="smc-struct range">↔️ Ranging</span>';
+}
+
+// สร้าง HTML ของ SMC block ในการ์ด (เรียกทั้งตอน render ครั้งแรก และตอน refresh หลังบันทึก)
+function smcBlockHtml(sym, price, direction) {
+  const data = smcLoad(sym);
+  if (!data) {
+    return '<div class="smc-block"><div class="smc-head"><span class="smc-title">📐 SMC Structure</span><button class="smc-edit-btn" onclick="smcOpenEditor(\'' + sym + '\')">+ เพิ่มข้อมูล</button></div><div class="smc-empty">ยังไม่มีข้อมูล — กรอกโครงสร้าง SMC เพื่อใช้กรองสัญญาณเสริม</div></div>';
+  }
+  let html = '<div class="smc-block"><div class="smc-head">';
+  html += '<span>' + smcStructBadge(data.structure) + '<span class="smc-tf">' + (data.timeframe || '') + '</span></span>';
+  html += '<button class="smc-edit-btn" onclick="smcOpenEditor(\'' + sym + '\')">✏️ แก้ไข</button></div>';
+
+  if (data.choch) html += '<div class="smc-line">🔀 CHoCH: $' + data.choch.price + (data.choch.date ? ' (' + data.choch.date + ')' : '') + ' ' + (data.choch.dir === 'up' ? '↑ เปลี่ยนเป็นขาขึ้น' : data.choch.dir === 'down' ? '↓ เปลี่ยนเป็นขาลง' : '') + '</div>';
+  if (data.bos) html += '<div class="smc-line">✅ BOS: $' + data.bos.price + (data.bos.date ? ' (' + data.bos.date + ')' : '') + ' ' + (data.bos.dir === 'up' ? '↑ ยืนยันขาขึ้น' : data.bos.dir === 'down' ? '↓ ยืนยันขาลง' : '') + '</div>';
+
+  (data.zones || []).forEach(z => {
+    const statusTh = z.status === 'untested' ? 'ยังไม่ถูกทดสอบ' : z.status === 'tested' ? 'ทดสอบแล้ว' : 'ถูกทะลุแล้ว';
+    html += '<div class="smc-zone ' + z.type + '"><span>' + (z.type === 'supply' ? '🔴 Supply' : '🔵 Demand') + ' $' + z.low + '–$' + z.high + '</span><span class="smc-zone-status">' + statusTh + '</span></div>';
+  });
+
+  if (data.weakHigh) html += '<div class="smc-line">〰️ Weak High: $' + data.weakHigh.price + (data.weakHigh.note ? ' — ' + data.weakHigh.note : '') + '</div>';
+  if (data.weakLow) html += '<div class="smc-line">〰️ Weak Low: $' + data.weakLow.price + (data.weakLow.note ? ' — ' + data.weakLow.note : '') + '</div>';
+
+  if (price) html += smcConfidenceBadge(direction, data, price);
+  html += '</div>';
+  return html;
+}
+
+/* ================= จบส่วน SMC Structure Tracker ================= */
+
 function renderScan(parsed, dt) {
   document.getElementById('scan-loading').style.display = 'none';
   window._lvMap = parsed._lv || window._lvMap || {};
@@ -1204,6 +1441,7 @@ function renderScan(parsed, dt) {
       ${levelBlock(lvOf(c.symbol), false)}
       <div class="coin-sec"><span class="coin-label">เหตุผล + CDC</span>${c.reason||'—'}</div>
       <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
+      <div data-smc-sym="${(c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase()}" data-smc-price="${parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||''}" data-smc-dir="long">${smcBlockHtml((c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase(), parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||null, 'long')}</div>
     </div>`).join('');
   const shortCoins = parsed.coins_short || [];
   const shortWrap = document.getElementById('short-section');
@@ -1222,6 +1460,7 @@ function renderScan(parsed, dt) {
         ${levelBlock(lvOf(c.symbol), true)}
         <div class="coin-sec"><span class="coin-label">เหตุผล + CDC</span>${c.reason||'—'}</div>
         <div class="coin-risk">⚠️ ${c.risk||'—'}</div>
+        <div data-smc-sym="${(c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase()}" data-smc-price="${parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||''}" data-smc-dir="short">${smcBlockHtml((c.symbol||'').split(/[\s—(]/)[0].trim().toUpperCase(), parseFloat(String(c.price||'').replace(/[^0-9.]/g,''))||null, 'short')}</div>
       </div>`).join('');
   } else { shortWrap.style.display = 'none'; }
   document.getElementById('scan-time').textContent = (dt||new Date()).toLocaleDateString('th-TH') + ' ' + (dt||new Date()).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
@@ -1256,6 +1495,9 @@ async function fetchLivePrices(coins, pricePrefix, verdictPrefix, direction) {
     if (price == null) { el.innerHTML = '<span style="color:var(--tx3);">เช็คราคาใน Bybit</span>'; continue; }
     const fmtP = fmtPrice(price);
     el.innerHTML = '<span style="color:var(--tx);font-weight:700;font-size:15px;">' + fmtP + '</span>' + (chg != null ? ' <span style="color:' + (chg >= 0 ? 'var(--gd)' : 'var(--red)') + ';">' + (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%</span>' : '');
+    // อัปเดต SMC block ด้วยราคาสดจริง (แม่นกว่าราคาตอนสแกน) เพื่อเช็ค proximity ให้ถูกต้อง
+    const smcEl = el.closest('.coin-card') ? el.closest('.coin-card').querySelector('[data-smc-sym="' + ticker + '"]') : null;
+    if (smcEl) { smcEl.setAttribute('data-smc-price', price); smcEl.innerHTML = smcBlockHtml(ticker, price, direction); }
     const lv = (window._lvMap || {})[ticker];
     const eLow = lv ? Math.min(lv.entry1, lv.entry2) : Number(coins[i].entry_low);
     const eHigh = lv ? Math.max(lv.entry1, lv.entry2) : Number(coins[i].entry_high);
@@ -1443,5 +1685,81 @@ window.addEventListener('load', () => {
   startCooldownCountdown();
 });
 </script>
+<!-- SMC Structure Tracker: Editor Modal -->
+<div class="smc-modal-overlay" id="smc-overlay" onclick="if(event.target===this)smcCloseEditor()">
+  <div class="smc-modal">
+    <div class="smc-modal-title">
+      <span>📐 SMC Structure — <span id="smc-modal-sym"></span></span>
+      <button class="smc-modal-close" onclick="smcCloseEditor()">✕</button>
+    </div>
+
+    <div class="smc-field">
+      <label>Market Structure ปัจจุบัน</label>
+      <select id="smc-structure">
+        <option value="Bullish">📈 Bullish</option>
+        <option value="Bearish">📉 Bearish</option>
+        <option value="Ranging">↔️ Ranging</option>
+      </select>
+    </div>
+    <div class="smc-field">
+      <label>Timeframe ที่ใช้ดู</label>
+      <select id="smc-timeframe">
+        <option value="5m">5 นาที</option>
+        <option value="15m">15 นาที</option>
+        <option value="1H">1 ชั่วโมง</option>
+        <option value="4H">4 ชั่วโมง</option>
+        <option value="1D">1 วัน</option>
+      </select>
+    </div>
+
+    <div class="smc-field">
+      <label>BOS (Break of Structure) — ยืนยันเทรนด์เดิม</label>
+      <div class="smc-row2">
+        <div><input type="number" step="any" id="smc-bos-price" placeholder="ราคาที่เกิด"></div>
+        <div><select id="smc-bos-dir"><option value="">— ทิศทาง —</option><option value="up">ขึ้น (Bullish)</option><option value="down">ลง (Bearish)</option></select></div>
+      </div>
+      <div style="margin-top:6px;"><input type="date" id="smc-bos-date"></div>
+    </div>
+
+    <div class="smc-field">
+      <label>CHoCH (Change of Character) — สัญญาณเปลี่ยนเทรนด์</label>
+      <div class="smc-row2">
+        <div><input type="number" step="any" id="smc-choch-price" placeholder="ราคาที่เกิด"></div>
+        <div><select id="smc-choch-dir"><option value="">— ทิศทาง —</option><option value="up">ขึ้น (เปลี่ยนเป็นขาขึ้น)</option><option value="down">ลง (เปลี่ยนเป็นขาลง)</option></select></div>
+      </div>
+      <div style="margin-top:6px;"><input type="date" id="smc-choch-date"></div>
+    </div>
+
+    <div class="smc-field">
+      <label>โซนแนวรับ/แนวต้าน (Supply / Demand)</label>
+      <div id="smc-zones-list"></div>
+      <button type="button" class="smc-add-zone" onclick="smcAddZoneRow()">+ เพิ่มโซน</button>
+    </div>
+
+    <div class="smc-field">
+      <label>Weak High (จุดเสี่ยงถูกทะลุขึ้น — liquidity sweep)</label>
+      <div class="smc-row2">
+        <div><input type="number" step="any" id="smc-weakhigh-price" placeholder="ราคา"></div>
+        <div><input type="text" id="smc-weakhigh-note" placeholder="โน้ต (ถ้ามี)"></div>
+      </div>
+    </div>
+    <div class="smc-field">
+      <label>Weak Low (จุดเสี่ยงถูกทะลุลง — liquidity sweep)</label>
+      <div class="smc-row2">
+        <div><input type="number" step="any" id="smc-weaklow-price" placeholder="ราคา"></div>
+        <div><input type="text" id="smc-weaklow-note" placeholder="โน้ต (ถ้ามี)"></div>
+      </div>
+    </div>
+
+    <div class="smc-modal-actions">
+      <button class="btn btn-ghost" onclick="smcCloseEditor()">ยกเลิก</button>
+      <button class="btn btn-purple" onclick="smcSaveFromModal()">💾 บันทึก</button>
+    </div>
+    <div class="smc-modal-actions" style="margin-top:6px;">
+      <button class="btn btn-ghost" style="color:var(--red);" onclick="smcDeleteFromModal()">🗑️ ลบข้อมูล SMC เหรียญนี้</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
